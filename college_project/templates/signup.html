@@ -1,70 +1,182 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ role|capitalize }} Sign Up</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ role|capitalize }} Sign Up — BusTrack</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
     <style>
-        .signup-card {
-            margin-top: 50px;
-            width: 380px;
-            padding: 30px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            text-align: center;
-        }
-        .input-box {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 12px;
-            border: none;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            outline: none;
-        }
-        .input-box::placeholder { color: rgba(255,255,255,0.7); }
-        .signup-btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 20px;
-            border-radius: 20px;
-            border: none;
-            background: linear-gradient(90deg, #ffe082, #facc15);
-            color: black;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .error-msg { color: #ff6b6b; margin-bottom: 15px; }
+      body {
+        overflow-y: auto;
+      }
+      .signup-wrap {
+        width: 100%;
+        max-width: 420px;
+        padding: 40px 36px;
+      }
+      .signup-head {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      .signup-head h2 {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--white), var(--cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .signup-head p {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .form-footer {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .form-footer a {
+        color: var(--cyan);
+        font-weight: 600;
+      }
+      .form-footer a:hover {
+        text-decoration: underline;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--muted);
+        position: fixed;
+        top: 18px;
+        left: 22px;
+        z-index: 99;
+        transition: color 0.2s;
+      }
+      .back-link:hover {
+        color: var(--white);
+      }
     </style>
-</head>
-<body>
-    <h1>College Bus Time Tracker</h1>
-    <div class="signup-card">
-        <h2>{{ role|capitalize }} Registration</h2>
-        
+  </head>
+  <body>
+    <!-- CURSOR -->
+    <div id="cursor"></div>
+    <div id="aura"></div>
+
+    <!-- BACKGROUND EFFECTS -->
+    <canvas id="particle-field"></canvas>
+    <div class="map-fixed-bg"></div>
+    <div class="hud-grid-overlay"></div>
+    <div class="scanning-line"></div>
+
+    <nav class="topbar">
+      <div class="topbar-brand">BusTrack</div>
+      <a href="/{{ role }}" class="badge" style="text-decoration:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to Login
+      </a>
+    </nav>
+
+    <div class="page-scene">
+      <div class="card signup-wrap">
+        <div class="signup-head">
+          <div class="badge">
+            <span class="badge-dot"></span>{{ role|capitalize }} Registration
+          </div>
+          <h2>Create Account</h2>
+          <p>Register as a {{ role }} on BusTrack</p>
+        </div>
+
         {% if error %}
-        <div class="error-msg">❌ {{ error }}</div>
+        <div class="alert-error">{{ error }}</div>
         {% endif %}
 
         <form method="POST" action="/signup/{{ role }}">
-            <input class="input-box" type="text" name="username" placeholder="Username" required>
-            <input class="input-box" type="password" name="password" placeholder="Password" required>
-            
-            {% if role == 'student' %}
-            <input class="input-box" type="text" name="assigned_bus" placeholder="Assigned Bus ID (e.g. 1)" required>
-            <input class="input-box" type="text" name="assigned_stop" placeholder="Assigned Stop Name" required>
-            {% elif role == 'parent' %}
-            <input class="input-box" type="text" name="student_name" placeholder="Student's Full Name" required>
-            {% elif role == 'driver' %}
-            <input class="input-box" type="text" name="assigned_bus" placeholder="Assigned Bus ID (e.g. 1)" required>
-            {% endif %}
+          <div class="input-group">
+            <label class="input-label">Username</label>
+            <input
+              class="input-box"
+              type="text"
+              name="username"
+              placeholder="Choose a username"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Password</label>
+            <input
+              class="input-box"
+              type="password"
+              name="password"
+              placeholder="Create a password"
+              required
+            />
+          </div>
 
-            <button class="signup-btn" type="submit">Complete Sign Up</button>
+          {% if role == 'student' %}
+          <div class="input-group">
+            <label class="input-label">Required Stop</label>
+            <input
+              class="input-box"
+              type="text"
+              name="assigned_stop"
+              placeholder="e.g. Main Gate"
+              required
+            />
+          </div>
+          {% elif role == 'parent' %}
+          <div class="input-group">
+            <label class="input-label">Student's Full Name</label>
+            <input
+              class="input-box"
+              type="text"
+              name="student_name"
+              placeholder="Enter student name"
+              required
+            />
+          </div>
+          {% elif role == 'driver' %}
+          <div class="input-group">
+            <label class="input-label">Assigned Bus ID</label>
+            <input
+              class="input-box"
+              type="text"
+              name="assigned_bus"
+              placeholder="e.g. 1"
+              required
+            />
+          </div>
+          {% endif %}
+
+          <button class="btn-primary" type="submit">
+            Complete Registration
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
         </form>
-        
-        <p style="margin-top:20px; color:white;">Already have an account? <a href="/{{ role }}" style="color:#ffe082;">Login here</a></p>
+
+        <div class="form-footer">
+          Already have an account? <a href="/{{ role }}">Login here</a>
+        </div>
+      </div>
     </div>
-</body>
+
+    <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
+  </body>
 </html>

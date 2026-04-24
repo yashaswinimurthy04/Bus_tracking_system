@@ -1,130 +1,161 @@
-<!DOCTYPE html>
-<html>
-<head>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Dashboard — BusTrack</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <style>
+      .driver-dashboard {
+        display: flex;
+        gap: 30px;
+        width: 100%;
+        max-width: 1400px;
+        height: 80vh;
+        z-index: 10;
+      }
+      .students-panel {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .map-panel {
+        flex: 2;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+      .student-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: 0.3s;
+      }
+      .student-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--neon-cyan);
+      }
+      .student-name {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--white);
+        margin-bottom: 4px;
+      }
+      .student-stop {
+        font-size: 0.85rem;
+        color: var(--neon-cyan);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .student-list-scroll {
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+      .panel-header {
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .panel-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--white);
+      }
+    </style>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+    <div id="cursor"></div>
+    <div id="aura"></div>
+    <div class="hud-grid-overlay"></div>
 
-<title>Driver Dashboard</title>
+    <nav class="topbar">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <span class="topbar-brand">BusTrack Driver</span>
+      </div>
+      <div style="display:flex; gap:20px; align-items:center;">
+        <span class="badge" style="background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#fbbf24;">
+          <span class="badge-dot" style="background:#fbbf24;"></span>
+          Bus {{ user.assigned_bus }} Active
+        </span>
+        <a href="/logout" class="badge" style="text-decoration:none; border-color:rgba(239,68,68,0.3); color:#f87171;">Logout</a>
+      </div>
+    </nav>
 
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/style.css') }}">
+    <div class="page-scene">
+      <div class="driver-dashboard">
+        <!-- Left Panel: Students -->
+        <div class="students-panel">
+          <div class="panel-header">
+            <div class="panel-title">👥 Assigned Students</div>
+            <div style="font-size: 0.8rem; color: var(--muted)">{{ students|length }} Students</div>
+          </div>
+          <div class="student-list-scroll">
+            {% if students %}
+              {% for s in students %}
+              <div class="student-card">
+                <div class="student-name">{{ s.full_name }}</div>
+                <div class="student-stop">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Stop: {{ s.assigned_stop or 'Not Set' }}
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <p style="text-align:center; opacity:0.5; margin-top:50px;">No students assigned to this bus.</p>
+            {% endif %}
+          </div>
+        </div>
 
-<style>
-
-.dashboard-wrapper {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.dashboard-title {
-    position: absolute;
-    top: 40px;
-    font-size: 40px;
-    color: #ffe082;
-}
-
-.dashboard-card {
-
-    width: 330px;
-    padding: 25px;
-
-    border-radius: 20px;
-
-    background: rgba(255,255,255,0.15);
-
-    backdrop-filter: blur(12px);
-
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.menu-btn {
-
-    padding: 12px;
-    border-radius: 12px;
-
-    background: rgba(255,255,255,0.25);
-
-    cursor: pointer;
-
-    transition: 0.3s;
-}
-
-.menu-btn:hover {
-
-    transform: scale(1.05);
-    background: rgba(255,255,255,0.4);
-
-}
-
-</style>
-
-</head>
-<script>
-
-document.addEventListener("click", function(e) {
-
-    let bus = document.createElement("div");
-
-    bus.innerHTML = "🚌";
-
-    bus.style.position = "fixed";
-    bus.style.left = e.clientX + "px";
-    bus.style.top = e.clientY + "px";
-
-    bus.style.fontSize = "26px";
-
-    bus.style.pointerEvents = "none";
-
-    bus.style.transition = "all 0.5s ease";
-
-    document.body.appendChild(bus);
-
-    setTimeout(() => {
-        bus.style.transform = "translateY(-25px)";
-        bus.style.opacity = "0";
-    }, 50);
-
-    setTimeout(() => {
-        bus.remove();
-    }, 600);
-
-});
-
-</script>
-
-<body>
-
-<div class="dashboard-wrapper">
-
-<div class="dashboard-title">
-Driver Dashboard
-</div>
-
-<div class="dashboard-card">
-    <!-- ✅ DYNAMIC USER INFO -->
-    <div class="user-info" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; margin-bottom: 15px; color: #fff;">
-        <h3>👋 Welcome {{ user.full_name or user.username }}</h3>
-        <p>🚛 Assigned Bus: {{ user.assigned_bus or "No Bus Assigned" }}</p>
+        <!-- Right Panel: Map -->
+        <div class="map-panel">
+          <div id="map"></div>
+        </div>
+      </div>
     </div>
 
-<div class="menu-btn">📍 Update Location</div>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      // Initialize Map
+      var map = L.map('map').setView([12.9716, 77.5946], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+      }).addTo(map);
 
-<div class="menu-btn">🛣 Route Details</div>
-
-<div class="menu-btn">🔔 Notifications</div>
-
-<div class="menu-btn">👤 Profile</div>
-
-<div class="menu-btn">🚪 Logout</div>
-
-</div>
-
-</div>
-
-</body>
+      // Simulation of current bus location
+      var busMarker = L.marker([12.9716, 77.5946], {
+          icon: L.divIcon({
+              className: 'custom-div-icon',
+              html: "<div style='background-color:#fbbf24; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #fbbf24;'></div>",
+              iconSize: [15, 15],
+              iconAnchor: [7, 7]
+          })
+      }).addTo(map).bindPopup("Current Position - Bus {{ user.assigned_bus }}");
+    </script>
+    <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
+  </body>
 </html>

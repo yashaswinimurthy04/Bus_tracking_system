@@ -1,81 +1,257 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BusTrack — Operations Command</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    :root {
+      --neon: #00f2ff;
+      --neon-purple: #bd00ff;
+      --bg-dark: #02040a;
+      --glass: rgba(2, 4, 10, 0.8);
+      --cursor-color: var(--neon); /* New cursor color */
+    }
 
-<title>College Bus Tracker</title>
+    html, body {
+      min-height: 100vh;
+      height: auto;
+    }
 
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/style.css') }}">
+    body {
+      background: var(--bg-dark);
+      color: #fff;
+      overflow-x: hidden;
+      perspective: none !important;
+    }
 
+    /* --- CURSOR COLOR OVERRIDE --- */
+    #cursor::after {
+      background: var(--cursor-color) !important;
+      box-shadow: 0 0 20px var(--cursor-color);
+    }
+
+    #aura {
+      background: radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, transparent 70%) !important;
+    }
+
+    /* --- REACTIVE TEXT HOVER --- */
+    h1:hover, h2:hover, h3:hover, p:hover, span:hover, a:hover, .hud-value:hover {
+      color: var(--neon) !important;
+      text-shadow: 0 0 15px var(--neon);
+      transition: all 0.3s ease;
+    }
+
+
+    /* --- LAYOUT --- */
+    .content-wrapper {
+      position: relative;
+      width: 100%;
+      padding-bottom: 400px; /* Large buffer for cursor movement at bottom */
+    }
+
+    .hero-section {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(60px, 10vw, 120px);
+      line-height: 0.9;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #fff 0%, var(--neon) 150%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* --- BENTO HUD PANELS --- */
+    .bento-section {
+      padding: 100px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .hud-panel {
+      background: var(--glass);
+      border: 1px solid rgba(0, 242, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      transition: 0.4s;
+    }
+
+    .hud-panel:hover {
+      border-color: var(--neon);
+      transform: translateY(-5px);
+      box-shadow: 0 0 30px rgba(0, 242, 255, 0.1);
+    }
+
+    .panel-header {
+      font-size: 10px;
+      color: var(--neon);
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .panel-desc {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+    }
+
+    /* --- ACCESS PROTOCOLS --- */
+    .access-section {
+      padding: 100px 40px 200px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .protocol-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 24px;
+      text-decoration: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      transition: 0.3s;
+    }
+
+    .protocol-card:hover {
+      background: rgba(0, 242, 255, 0.05);
+      border-color: var(--neon);
+      transform: scale(1.02);
+    }
+
+    .level-tag {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--neon-purple);
+      margin-bottom: 10px;
+    }
+
+    /* --- HUD CORNERS --- */
+    .hud-corner {
+      position: fixed;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 10px;
+      color: var(--neon);
+      z-index: 100;
+      pointer-events: none;
+    }
+    .hud-tl { top: 20px; left: 20px; }
+    .hud-tr { top: 20px; right: 20px; text-align: right; }
+    .hud-bl { bottom: 20px; left: 20px; }
+    .hud-br { bottom: 20px; right: 20px; text-align: right; }
+  </style>
 </head>
-<script>
-
-document.addEventListener("click", function(e) {
-
-    let bus = document.createElement("div");
-
-    bus.innerHTML = "🚌";
-
-    bus.style.position = "fixed";
-    bus.style.left = e.clientX + "px";
-    bus.style.top = e.clientY + "px";
-
-    bus.style.fontSize = "26px";
-
-    bus.style.pointerEvents = "none";
-
-    bus.style.transition = "all 0.5s ease";
-
-    document.body.appendChild(bus);
-
-    setTimeout(() => {
-        bus.style.transform = "translateY(-25px)";
-        bus.style.opacity = "0";
-    }, 50);
-
-    setTimeout(() => {
-        bus.remove();
-    }, 600);
-
-});
-
-</script>
-
 <body>
+  <!-- CURSOR (UNTOUCHED) -->
+  <div id="cursor"></div>
+  <div id="aura"></div>
+  <canvas id="particle-field"></canvas>
 
-<h1>College Bus Time Tracker</h1>
+  <!-- FIXED HUD BACKGROUNDS -->
+  <div class="map-fixed-bg"></div>
+  <div class="hud-grid-overlay"></div>
+  <div class="scanning-line"></div>
 
-<div class="subtitle">
-Real Time GPS Bus Tracking System
-</div>
+  <div class="hud-corner hud-tl"></div>
+  <div class="hud-corner hud-tr"></div>
 
-<div class="bus">🚌</div>
+  <div class="content-wrapper">
+    <!-- HERO -->
+    <section class="hero-section">
+      <div style="margin-bottom: 20px; font-family: monospace; color: var(--neon); letter-spacing: 5px;">SATELLITE_LINK_ACTIVE</div>
+      <h1 class="hero-title">TRANSIT<br>COMMAND</h1>
+      <p style="max-width: 600px; opacity: 0.6; margin-bottom: 40px;">Real-time intelligence and fleet telemetry. Monitor every node, every route, every second.</p>
+      <a href="#roles" class="magnetic-btn" style="text-decoration: none; padding: 20px 50px;">ACCESS TERMINAL</a>
+    </section>
 
+    <!-- HUD BENTO -->
+    <section class="bento-section">
+      <div class="hud-grid">
+        <div class="hud-panel" style="grid-column: span 2;">
+          <div class="panel-header"><span>MODULE_01</span><span>CORE_ENGINE</span></div>
+          <h3 class="panel-title">Telemetry Sync</h3>
+          <p class="panel-desc">Sub-second latency synchronization across the entire fleet matrix. Real-time GPS coordinate validation with 0.5m precision.</p>
+        </div>
+        <div class="hud-panel" style="grid-column: span 2;">
+          <div class="panel-header"><span>MODULE_02</span><span>VISUAL_INTEL</span></div>
+          <h3 class="panel-title">Cortex Map</h3>
+          <p class="panel-desc">3D route projection and traffic pattern analysis. Experience the campus with augmented reality street-level monitoring.</p>
+        </div>
+        <div class="hud-panel" style="grid-column: span 1;">
+          <div class="panel-header"><span>MODULE_03</span></div>
+          <h3 class="panel-title">SafeLink</h3>
+          <p class="panel-desc">Quantum-encrypted communication channels.</p>
+        </div>
+        <div class="hud-panel" style="grid-column: span 1;">
+          <div class="panel-header"><span>MODULE_04</span></div>
+          <h3 class="panel-title">1.2ms</h3>
+          <p class="panel-desc">Global synchronization heartbeat.</p>
+        </div>
+        <div class="hud-panel" style="grid-column: span 2;">
+          <div class="panel-header"><span>MODULE_05</span><span>AI_PILOT</span></div>
+          <h3 class="panel-title">Route Optimization</h3>
+          <p class="panel-desc">AI-driven pathfinding to avoid congestion and ensure 99.9% on-time arrival across all sectors.</p>
+        </div>
+      </div>
+    </section>
 
-<div class="container">
+    <!-- PROTOCOLS -->
+    <section class="access-section" id="roles">
+      <h2 style="font-size: 50px; text-align: center; margin-bottom: 60px;">ACCESS PROTOCOLS</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <a href="/student" class="protocol-card">
+          <span class="level-tag">ACCESS_LEVEL_01</span>
+          <h3 class="panel-title">STUDENT</h3>
+          <p class="panel-desc">Route schedules, ETA tracking, and boarding manifest.</p>
+        </a>
+        <a href="/parent" class="protocol-card">
+          <span class="level-tag">ACCESS_LEVEL_02</span>
+          <h3 class="panel-title">PARENT</h3>
+          <p class="panel-desc">Safety monitoring, live location sharing, and alerts.</p>
+        </a>
+        <a href="/driver" class="protocol-card">
+          <span class="level-tag">ACCESS_LEVEL_03</span>
+          <h3 class="panel-title">DRIVER</h3>
+          <p class="panel-desc">Navigation uplink, student manifest, and traffic bypass.</p>
+        </a>
+        <a href="/admin" class="protocol-card">
+          <span class="level-tag">ACCESS_LEVEL_04</span>
+          <h3 class="panel-title">ADMIN</h3>
+          <p class="panel-desc">Full fleet override, system diagnostics, and data control.</p>
+        </a>
+      </div>
+    </section>
+  </div>
 
-    <a href="/student" class="box">
-        <div class="icon">🎓 Student</div>
-    </a>
-
-    <a href="/parent" class="box">
-        <div class="icon">📍Parent</div>
-    </a>
-
-    <a href="/driver" class="box">
-        <div class="icon">🚌Driver</div>
-    </a>
-
-    <a href="/admin" class="box">
-        <div class="icon">⚙️ Admin</div>
-       
-    </a>
-
-</div>
-</div>
-
-</div>
-
+  <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
 </body>
 </html>

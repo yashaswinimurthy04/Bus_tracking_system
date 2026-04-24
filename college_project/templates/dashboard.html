@@ -1,43 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Dashboard</title>
-</head>
-<script>
+  </head>
+  <script>
+    document.addEventListener("click", function (e) {
+      let bus = document.createElement("div");
 
-document.addEventListener("click", function(e) {
+      bus.innerHTML = "🚌";
 
-    let bus = document.createElement("div");
+      bus.style.position = "fixed";
+      bus.style.left = e.clientX + "px";
+      bus.style.top = e.clientY + "px";
 
-    bus.innerHTML = "🚌";
+      bus.style.fontSize = "26px";
 
-    bus.style.position = "fixed";
-    bus.style.left = e.clientX + "px";
-    bus.style.top = e.clientY + "px";
+      bus.style.pointerEvents = "none";
 
-    bus.style.fontSize = "26px";
+      bus.style.transition = "all 0.5s ease";
 
-    bus.style.pointerEvents = "none";
+      document.body.appendChild(bus);
 
-    bus.style.transition = "all 0.5s ease";
-
-    document.body.appendChild(bus);
-
-    setTimeout(() => {
+      setTimeout(() => {
         bus.style.transform = "translateY(-25px)";
         bus.style.opacity = "0";
-    }, 50);
+      }, 50);
 
-    setTimeout(() => {
+      setTimeout(() => {
         bus.remove();
-    }, 600);
-
-});
-
-</script>
-<body>
-
-<h1>Welcome to Dashboard</h1>
-
-</body>
+      }, 600);
+    });
+  </script>
+  <body>
+    <h1>Welcome to Dashboard</h1>
+  </body>
 </html>

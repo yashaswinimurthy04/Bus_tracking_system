@@ -1,123 +1,195 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Select Bus</title>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Select Bus — BusTrack</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <style>
+      body {
+        overflow: hidden;
+      }
+      .sel-wrap {
+        width: 100%;
+        max-width: 380px;
+        padding: 36px 28px;
+        margin-top: 60px;
+      }
+      .sel-head {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      .sel-head h2 {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, var(--white), var(--cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .sel-head p {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 5px;
+      }
+      .bus-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .bus-btn {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        background: rgba(59, 130, 246, 0.06);
+        border: 1px solid rgba(59, 130, 246, 0.18);
+        color: var(--white);
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+      .bus-btn:hover {
+        background: rgba(59, 130, 246, 0.14);
+        border-color: var(--accent);
+        transform: translateX(4px);
+        box-shadow: 0 6px 24px rgba(59, 130, 246, 0.2);
+      }
+      .bus-num {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(6, 182, 212, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--cyan);
+      }
+      .bus-info p {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .arrow-icon {
+        margin-left: auto;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="stars"></canvas>
+    <div class="road-plane"></div>
+    <div class="particles" id="particles"></div>
 
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/style.css') }}">
+    <nav class="topbar">
+      <span class="topbar-brand">BusTrack</span>
+      <div class="topbar-right">
+        <span class="topbar-badge"><span class="topbar-dot"></span>Live</span>
+      </div>
+    </nav>
 
-<style>
+    <div class="page-scene">
+      <div class="card sel-wrap">
+        <div class="sel-head">
+          <div class="badge"><span class="badge-dot"></span>Live Tracking</div>
+          <h2>Select Your Bus</h2>
+          <p>Choose a bus to open the live tracking view</p>
+        </div>
+        <div class="bus-list">
+          <a
+            href="/tracking?bus=1"
+            class="bus-btn"
+            id="bus-1"
+            onclick="saveBus('Bus 1')"
+          >
+            <div class="bus-num">B1</div>
+            <div class="bus-info">
+              <div>Bus 1</div>
+              <p>Route A — Main Campus</p>
+            </div>
+            <div class="arrow-icon">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
 
-.wrapper {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
+          <a
+            href="/tracking?bus=2"
+            class="bus-btn"
+            id="bus-2"
+            onclick="saveBus('Bus 2')"
+          >
+            <div class="bus-num">B2</div>
+            <div class="bus-info">
+              <div>Bus 2</div>
+              <p>Route B — North Wing</p>
+            </div>
+            <div class="arrow-icon">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
 
-.title {
-    position: absolute;
-    top: 40px;
-    font-size: 40px;
-    color: #ffe082;
-}
+          <a
+            href="/tracking?bus=3"
+            class="bus-btn"
+            id="bus-3"
+            onclick="saveBus('Bus 3')"
+          >
+            <div class="bus-num">B3</div>
+            <div class="bus-info">
+              <div>Bus 3</div>
+              <p>Route C — South Gate</p>
+            </div>
+            <div class="arrow-icon">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
 
-.card {
-    width: 340px;
-    padding: 30px;
-    border-radius: 22px;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.helper-text {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.85;
-    text-align: center;
-}
-
-.bus-btn {
-    padding: 14px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.25);
-    text-decoration: none;
-    color: white;
-    font-size: 18px;
-    text-align: center;
-    transition: 0.3s;
-}
-
-.bus-btn:hover {
-    transform: scale(1.05);
-    background: rgba(255,255,255,0.4);
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="wrapper">
-
-<div class="title">
-Select Your Bus
-</div>
-
-<div class="card">
-
-<p class="helper-text">
-Choose a bus to open the live tracking demo page.
-</p>
-
-<a href="/tracking?bus=1" class="bus-btn" onclick="saveBus('Bus 1')">&#128652; Bus 1</a>
-
-<a href="/tracking?bus=2" class="bus-btn" onclick="saveBus('Bus 2')">&#128652; Bus 2</a>
-
-<a href="/tracking?bus=3" class="bus-btn" onclick="saveBus('Bus 3')">&#128652; Bus 3</a>
-
-</div>
-
-</div>
-
-<script>
-
-function saveBus(busName) {
-    localStorage.setItem("selectedBus", busName);
-}
-
-document.addEventListener("click", function(e) {
-
-    const bus = document.createElement("div");
-
-    bus.innerHTML = "&#128652;";
-
-    bus.style.position = "fixed";
-    bus.style.left = e.clientX + "px";
-    bus.style.top = e.clientY + "px";
-    bus.style.fontSize = "26px";
-    bus.style.pointerEvents = "none";
-    bus.style.transition = "all 0.5s ease";
-
-    document.body.appendChild(bus);
-
-    setTimeout(() => {
-        bus.style.transform = "translateY(-25px)";
-        bus.style.opacity = "0";
-    }, 50);
-
-    setTimeout(() => {
-        bus.remove();
-    }, 600);
-
-});
-
-</script>
-
-</body>
+    <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
+    <script>
+      function saveBus(name) {
+        localStorage.setItem("selectedBus", name);
+      }
+    </script>
+  </body>
 </html>

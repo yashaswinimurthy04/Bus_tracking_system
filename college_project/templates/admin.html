@@ -1,347 +1,515 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Admin Dashboard</title>
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
     <style>
-        :root {
-            --primary: #ffe082;
-            --accent: #facc15;
-            --bg-dark: #0f172a;
-            --card-bg: rgba(255, 255, 255, 0.08); /* Darker glassmorphism */
-            --glass: rgba(255, 255, 255, 0.1);
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+      :root {
+        --primary: var(--neon-cyan);
+        --accent: var(--neon-purple);
+        --bg-dark: var(--cosmic-black);
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --glass: var(--glass-white);
+        --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-        body {
-            margin: 0;
-            font-family: 'Outfit', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--bg-dark);
+        color: white;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
 
-        .admin-header {
-            padding: 15px 40px;
-            background: rgba(0,0,0,0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            z-index: 100;
-        }
+      .admin-header {
+        padding: 15px 40px;
+        background: rgba(0, 0, 0, 0.3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 100;
+      }
 
-        .dashboard-main {
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            flex-grow: 1;
-            position: relative;
-            overflow-y: auto;
-        }
+      .dashboard-main {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        flex-grow: 1;
+        position: relative;
+        overflow-y: auto;
+      }
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-            min-height: 800px;
-            transition: var(--transition);
-        }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 25px;
+        min-height: 800px;
+        transition: var(--transition);
+      }
 
-        .box {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(12px);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: var(--transition);
-            cursor: pointer;
-            position: relative;
-        }
+      .box {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 24px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: var(--transition);
+        cursor: pointer;
+        position: relative;
+      }
 
-        .box:hover {
-            border-color: var(--primary);
-            background: rgba(255,255,255,0.12);
-            transform: translateY(-5px);
-        }
+      .box:hover {
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateY(-5px);
+      }
 
-        .box h2 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
-            pointer-events: none;
-        }
+      .box h2 {
+        margin-top: 0;
+        color: var(--primary);
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 15px;
+        pointer-events: none;
+      }
 
-        /* --- Fullscreen State --- */
-        .box.expanded {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            bottom: 20px;
-            z-index: 2000;
-            width: auto;
-            height: auto;
-            margin: 0;
-            cursor: default;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            background: #1e293b;
-            transform: none;
-        }
-        
-        .close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: black;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: none;
-            font-weight: bold;
-            z-index: 2001;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-        .box.expanded .close-btn { display: flex; }
+      /* --- Fullscreen State --- */
+      .box.expanded {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        z-index: 2000;
+        width: auto;
+        height: auto;
+        margin: 0;
+        cursor: default;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        background: #1e293b;
+        transform: none;
+      }
 
-        /* --- Box Content Specifics --- */
-        #map {
-            width: 100%;
-            height: 250px;
-            border-radius: 15px;
-            background: #242424;
-            transition: height 0.4s;
-        }
-        .box.expanded #map { height: 100%; }
+      .close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: black;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: none;
+        font-weight: bold;
+        z-index: 2001;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+      .box.expanded .close-btn {
+        display: flex;
+      }
 
-        .table-container { 
-            overflow-y: auto; 
-            flex-grow: 1;
-        }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        th { color: var(--primary); font-weight: 500; position: sticky; top: 0; background: #262c3a; }
+      /* --- Box Content Specifics --- */
+      #map {
+        width: 100%;
+        height: 250px;
+        border-radius: 15px;
+        background: #242424;
+        transition: height 0.4s;
+      }
+      .box.expanded #map {
+        height: 100%;
+      }
 
-        /* --- Notifications Section --- */
-        .notification-section {
-            background: rgba(0,0,0,0.4);
-            padding: 20px 40px;
-            border-top: 2px solid var(--primary);
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 40px;
-            height: 180px;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
+      .table-container {
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      th {
+        color: var(--primary);
+        font-weight: 500;
+        position: sticky;
+        top: 0;
+        background: #262c3a;
+      }
 
-        .note-list { overflow-y: auto; direction: rtl; }
-        .note-list > div { direction: ltr; margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.9rem; }
-        .note-time { font-size: 0.75rem; color: #94a3b8; }
+      /* --- Notifications Section --- */
+      .notification-section {
+        background: rgba(0, 0, 0, 0.4);
+        padding: 20px 40px;
+        border-top: 2px solid var(--primary);
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 40px;
+        height: 180px;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+      }
 
-        .note-input-container { display: flex; flex-direction: column; gap: 10px; }
+      .note-list {
+        overflow-y: auto;
+        direction: rtl;
+      }
+      .note-list > div {
+        direction: ltr;
+        margin-bottom: 10px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        font-size: 0.9rem;
+      }
+      .note-time {
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
 
-        /* --- Forms --- */
-        .entry-form { display: flex; flex-direction: column; gap: 12px; }
-        input, textarea {
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.05);
-            color: white;
-            outline: none;
-        }
-        .submit-btn {
-            background: var(--primary);
-            color: black;
-            font-weight: bold;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .submit-btn:hover { background: var(--accent); transform: scale(1.02); }
+      .note-input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
 
-        .role-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
-        .student { background: #3b82f6; } .parent { background: #8b5cf6; } .driver { background: #f59e0b; }
+      /* --- Forms --- */
+      .entry-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      input,
+      textarea {
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        outline: none;
+      }
+      .submit-btn {
+        background: var(--primary);
+        color: black;
+        font-weight: bold;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .submit-btn:hover {
+        background: var(--accent);
+        transform: scale(1.02);
+      }
+
+      .role-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: bold;
+      }
+      .student {
+        background: #3b82f6;
+      }
+      .parent {
+        background: #8b5cf6;
+      }
+      .driver {
+        background: #f59e0b;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id="cursor"></div>
+    <div id="aura"></div>
 
-    <div class="admin-header">
-        <h2 style="margin:0;">Admin Console <span style="font-weight: 300; font-size: 0.8rem; opacity: 0.6;">v2.0</span></h3>
-        <div style="display:flex; gap:20px; align-items:center;">
-            <span>Welcome, <strong>{{ user.full_name }}</strong></span>
-            <a href="/logout" style="color:var(--primary); text-decoration:none; font-size: 0.9rem;">Logout</a>
-        </div>
-    </div>
+    <header class="admin-header">
+      <h1 style="margin: 0; font-size: 1.5rem; color: var(--primary)">
+        Admin Console
+      </h1>
+      <a href="/logout" class="submit-btn" style="text-decoration: none"
+        >Logout</a
+      >
+    </header>
 
     <div class="dashboard-main">
-        <div class="grid-container" id="mainGrid">
-            
-            <!-- Box 1: Approvals -->
-            <div class="box" onclick="expandBox(this)">
-                <button class="close-btn" onclick="closeBox(event, this)">×</button>
-                <h2>👤 Pending Approvals</h2>
-                <div class="table-container">
-                    {% if pending_users %}
-                    <table>
-                        <thead>
-                            <tr><th>Name</th><th>Role</th><th>Action</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for u in pending_users %}
-                            <tr>
-                                <td>{{ u.full_name }}</td>
-                                <td><span class="role-badge {{ u.role }}">{{ u.role }}</span></td>
-                                <td><a href="/approve_user/{{ u.id }}" class="submit-btn" style="padding: 5px 12px;">Approve</a></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <p style="opacity:0.5; text-align:center; margin-top:50px;">No pending users.</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Box 2: Tracking -->
-            <div class="box" id="mapBox" onclick="expandBox(this)">
-                <button class="close-btn" onclick="closeBox(event, this)">×</button>
-                <h2>📍 Bus Tracking</h2>
-                <div id="map"></div>
-            </div>
-
-            <!-- Box 3: Data Entry -->
-            <div class="box" onclick="expandBox(this)">
-                <button class="close-btn" onclick="closeBox(event, this)">×</button>
-                <h2>🛠️ Add New Details</h2>
-                <form class="entry-form" action="/add_bus" method="POST" onsubmit="event.stopPropagation()">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <input type="text" name="id" placeholder="Bus Number (e.g. 5)" required>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <input type="text" name="route_from" placeholder="From (e.g. City)" required>
-                        <input type="text" name="route_to" placeholder="To (e.g. Campus)" required>
-                    </div>
-                    </div>
-                    
-                    <div id="stopsContainer">
-                        <label style="font-size: 0.8rem; color: var(--primary); margin-bottom: 5px; display: block;">Route Stops</label>
-                        <div style="display:flex; gap:10px; margin-bottom:10px;">
-                            <input type="text" name="stops[]" placeholder="Stop Name" style="flex-grow:1;" required>
-                            <button type="button" onclick="addStopField()" style="background: var(--primary); border:none; border-radius:8px; width:40px; cursor:pointer; font-weight:bold; font-size:1.2rem;">+</button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="submit-btn">Save Bus & Route</button>
-                </form>
-            </div>
-
-            <!-- Box 4: Registered Users -->
-            <div class="box" onclick="expandBox(this)">
-                <button class="close-btn" onclick="closeBox(event, this)">×</button>
-                <h2>📋 Registered Users</h2>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr><th>Name</th><th>Role</th><th>Details</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for u in all_users %}
-                            <tr>
-                                <td>
-                                    {{ u.full_name }}
-                                    {% if u.role == 'parent' and u.student_name %}
-                                    <br><small style="opacity:0.7;">(Student: {{ u.student_name }})</small>
-                                    {% endif %}
-                                </td>
-                                <td><span class="role-badge {{ u.role }}">{{ u.role }}</span></td>
-                                <td>{% if u.assigned_bus %}Bus {{ u.assigned_bus }}{% endif %}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
+      <div class="grid-container" id="mainGrid">
+        <!-- Box 1: Approvals -->
+        <div class="box" onclick="expandBox(this)">
+          <button class="close-btn" onclick="closeBox(event, this)">×</button>
+          <h2>👤 Pending Approvals</h2>
+          <div class="table-container">
+            {% if pending_users %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in pending_users %}
+                <tr>
+                  <td>{{ u.full_name }}</td>
+                  <td>
+                    <span class="role-badge {{ u.role }}">{{ u.role }}</span>
+                  </td>
+                  <td>
+                    <a
+                      href="/approve_user/{{ u.id }}"
+                      class="submit-btn"
+                      style="padding: 5px 12px"
+                      >Approve</a
+                    >
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <p style="opacity: 0.5; text-align: center; margin-top: 50px">
+              No pending users.
+            </p>
+            {% endif %}
+          </div>
         </div>
+
+        <!-- Box 2: Tracking -->
+        <div class="box" id="mapBox" onclick="expandBox(this)">
+          <button class="close-btn" onclick="closeBox(event, this)">×</button>
+          <h2>📍 Bus Tracking</h2>
+          <div id="map"></div>
+        </div>
+
+        <!-- Box 3: Data Entry -->
+        <div class="box" onclick="expandBox(this)">
+          <button class="close-btn" onclick="closeBox(event, this)">×</button>
+          <h2>🛠️ Add New Details</h2>
+          <form
+            class="entry-form"
+            action="/add_bus"
+            method="POST"
+            onsubmit="event.stopPropagation()"
+          >
+            <div
+              style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px"
+            >
+              <input
+                type="text"
+                name="id"
+                placeholder="Bus ID (e.g. 1)"
+                required
+              />
+              <input
+                type="text"
+                name="route_from"
+                placeholder="From"
+                required
+              />
+              <input
+                type="text"
+                name="route_to"
+                placeholder="To"
+                required
+              />
+            </div>
+            <input
+              type="text"
+              name="driver_name"
+              placeholder="Driver Name"
+              required
+            />
+
+            <div id="stopsContainer">
+              <label
+                style="
+                  font-size: 0.8rem;
+                  color: var(--primary);
+                  margin-bottom: 5px;
+                  display: block;
+                "
+                >Route Stops</label
+              >
+              <div style="display: flex; gap: 10px; margin-bottom: 10px">
+                <input
+                  type="text"
+                  name="stops[]"
+                  placeholder="Stop Name"
+                  style="flex-grow: 1"
+                  required
+                />
+                <button
+                  type="button"
+                  onclick="addStopField()"
+                  style="
+                    background: var(--primary);
+                    border: none;
+                    border-radius: 8px;
+                    width: 40px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 1.2rem;
+                  "
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Save Bus & Route</button>
+          </form>
+        </div>
+
+        <!-- Box 4: Registered Users -->
+        <div class="box" onclick="expandBox(this)">
+          <button class="close-btn" onclick="closeBox(event, this)">×</button>
+          <h2>📋 Registered Users</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Details</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in all_users %}
+                <tr>
+                  <td>
+                    {{ u.full_name }} {% if u.role == 'parent' and
+                    u.student_name %}
+                    <br /><small style="opacity: 0.7"
+                      >(Student: {{ u.student_name }})</small
+                    >
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="role-badge {{ u.role }}">{{ u.role }}</span>
+                  </td>
+                  <td>
+                    {% if u.assigned_bus %}Bus {{ u.assigned_bus }}{% endif %}
+                  </td>
+                  <td>
+                    <a href="/delete_user/{{ u.id }}" 
+                       class="submit-btn" 
+                       style="background: #ff4d4d; color: white; padding: 5px 10px; font-size: 0.8rem;"
+                       onclick="return confirm('Are you sure you want to remove this user?')">
+                       Remove
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="notification-section">
-        <div class="note-list">
-            {% for n in notifications %}
-            <div><span class="note-time">{{ n.timestamp }}</span>: {{ n.message }}</div>
-            {% endfor %}
+      <div class="note-list">
+        {% for n in notifications %}
+        <div>
+          <span class="note-time">{{ n.timestamp }}</span>: {{ n.message }}
         </div>
-        <div class="note-input-container">
-            <h3 style="margin:0; font-size: 1rem; color: var(--primary);">Broadcast Notification</h3>
-            <form action="/send_notification" method="POST" style="display:flex; gap:10px;">
-                <input type="text" name="message" placeholder="Type notification message here..." style="flex-grow:1;" required>
-                <button type="submit" class="submit-btn">Send</button>
-            </form>
-        </div>
+        {% endfor %}
+      </div>
+      <div class="note-input-container">
+        <h3 style="margin: 0; font-size: 1rem; color: var(--primary)">
+          Broadcast Notification
+        </h3>
+        <form
+          action="/send_notification"
+          method="POST"
+          style="display: flex; gap: 10px"
+        >
+          <input
+            type="text"
+            name="message"
+            placeholder="Type notification message here..."
+            style="flex-grow: 1"
+            required
+          />
+          <button type="submit" class="submit-btn">Send</button>
+        </form>
+      </div>
     </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([12.9716, 77.5946], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      var map = L.map('map').setView([12.9716, 77.5946], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        var buses = {{ buses|tojson }};
-        buses.forEach(function(bus) {
-            if(bus.lat && bus.lng) {
-                L.marker([bus.lat, bus.lng]).addTo(map)
-                 .bindPopup("<b>" + bus.name + "</b><br>" + bus.route_name);
-            }
-        });
+      var buses = {{ buses|tojson }};
+      buses.forEach(function(bus) {
+          if(bus.lat && bus.lng) {
+              L.marker([bus.lat, bus.lng]).addTo(map)
+               .bindPopup("<b>" + bus.name + "</b><br>" + bus.route_name);
+          }
+      });
 
-        function addStopField() {
-            const container = document.getElementById('stopsContainer');
-            const div = document.createElement('div');
-            div.style.display = 'flex';
-            div.style.gap = '10px';
-            div.style.marginBottom = '10px';
-            div.innerHTML = `
-                <input type="text" name="stops[]" placeholder="Stop Name" style="flex-grow:1;" required>
-                <button type="button" onclick="this.parentElement.remove()" style="background: #ff4d4d; border:none; border-radius:8px; width:40px; cursor:pointer; color:white; font-weight:bold;">×</button>
-            `;
-            container.appendChild(div);
-        }
+      function addStopField() {
+          const container = document.getElementById('stopsContainer');
+          const div = document.createElement('div');
+          div.style.display = 'flex';
+          div.style.gap = '10px';
+          div.style.marginBottom = '10px';
+          div.innerHTML = `
+              <input type="text" name="stops[]" placeholder="Stop Name" style="flex-grow:1;" required>
+              <button type="button" onclick="this.parentElement.remove()" style="background: #ff4d4d; border:none; border-radius:8px; width:40px; cursor:pointer; color:white; font-weight:bold;">×</button>
+          `;
+          container.appendChild(div);
+      }
 
-        function expandBox(box) {
-            if (box.classList.contains('expanded')) return;
-            document.querySelectorAll('.box.expanded').forEach(b => b.classList.remove('expanded'));
-            box.classList.add('expanded');
-            if (box.id === 'mapBox') setTimeout(() => map.invalidateSize(), 400);
-        }
+      function expandBox(box) {
+          if (box.classList.contains('expanded')) return;
+          document.querySelectorAll('.box.expanded').forEach(b => b.classList.remove('expanded'));
+          box.classList.add('expanded');
+          if (box.id === 'mapBox') setTimeout(() => map.invalidateSize(), 400);
+      }
 
-        function closeBox(event, btn) {
-            event.stopPropagation();
-            const box = btn.closest('.box');
-            box.classList.remove('expanded');
-            if (box.id === 'mapBox') setTimeout(() => map.invalidateSize(), 400);
-        }
+      function closeBox(event, btn) {
+          event.stopPropagation();
+          const box = btn.closest('.box');
+          box.classList.remove('expanded');
+          if (box.id === 'mapBox') setTimeout(() => map.invalidateSize(), 400);
+      }
     </script>
-</body>
+    <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
+  </body>
 </html>

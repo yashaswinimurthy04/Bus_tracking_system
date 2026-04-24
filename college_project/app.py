@@ -9,7 +9,24 @@ BACKEND_URL = "http://localhost:5001/api"
 # ---------- HOME ----------
 @app.route("/")
 def welcome():
-    return render_template("welcome.html")
+    bus_count, stop_count = 0, 0 # Default to 0
+    try:
+        # Fetch all buses from backend
+        response = requests.get(f"{BACKEND_URL}/buses")
+        if response.status_code == 200:
+            buses = response.json()
+            bus_count = len(buses)
+            
+            # Count unique stops
+            all_stops = set()
+            for bus in buses:
+                for stop in bus.get("stops", []):
+                    all_stops.add(stop)
+            stop_count = len(all_stops)
+    except Exception as e:
+        print(f"Welcome Fetch Error: {e}")
+
+    return render_template("welcome.html", bus_count=bus_count, stop_count=stop_count)
 
 
 @app.route("/home")
@@ -25,6 +42,8 @@ def select_bus():
 # ---------- SIGNUP ----------
 @app.route("/signup/<role>", methods=["GET", "POST"])
 def signup(role):
+    if role == "driver":
+        return redirect("/driver?msg=Driver registration is managed by admin.")
     if request.method == "POST":
         data = {
             "username": request.form.get("username"),
@@ -123,11 +142,11 @@ def login():
     role = request.form.get("role")
 
     try:
-        # Authenticate via backend API
         response = requests.post(f"{BACKEND_URL}/login", json={
             "username": username,
             "password": password,
-            "role": role
+            "role": role,
+            "bus_id": request.form.get("bus_id")
         })
 
         if response.status_code == 200:
@@ -135,6 +154,11 @@ def login():
             session["user"] = user_data
             return redirect(f"/{role}_dashboard")
         elif response.status_code == 403: # Pending Approval
+            # Admin Bypass: Admins do not need approval
+            user_data = response.json().get("user")
+            if role == "admin" and user_data:
+                session["user"] = user_data
+                return redirect("/admin_dashboard")
             return render_template("pending.html", role=role)
         else:
             message = response.json().get("message", "Invalid Login")
@@ -161,7 +185,16 @@ def parent_dashboard():
 @app.route("/driver_dashboard")
 def driver_dashboard():
     if "user" in session and session["user"]["role"] == "driver":
-        return render_template("driver.html", user=session["user"])
+        bus_id = session["user"].get("assigned_bus")
+        students = []
+        if bus_id:
+            try:
+                resp = requests.get(f"{BACKEND_URL}/api/bus/{bus_id}/students")
+                if resp.status_code == 200:
+                    students = resp.json()
+            except:
+                pass
+        return render_template("driver.html", user=session["user"], students=students)
     return redirect("/driver")
 
 
@@ -209,6 +242,19 @@ def approve_user(user_id):
             return f"<h2>❌ Connection Error</h2><p>{e}</p><a href='/admin_dashboard'>Go Back</a>"
     return redirect("/admin")
 
+@app.route("/delete_user/<int:user_id>")
+def delete_user(user_id):
+    if "user" in session and session["user"]["role"] == "admin":
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/delete_user/{user_id}")
+            if response.status_code == 200:
+                return redirect("/admin_dashboard?msg=User removed successfully")
+            else:
+                return f"<h2>❌ Removal Failed</h2><p>{response.json().get('message')}</p><a href='/admin_dashboard'>Go Back</a>"
+        except Exception as e:
+            return f"<h2>❌ Connection Error</h2><p>{e}</p><a href='/admin_dashboard'>Go Back</a>"
+    return redirect("/admin")
+
 @app.route("/add_bus", methods=["POST"])
 def add_bus():
     if "user" in session and session["user"]["role"] == "admin":
@@ -219,6 +265,7 @@ def add_bus():
             "id": request.form.get("id"),
             "route_name": f"{request.form.get('route_from')} → {request.form.get('route_to')}",
             "stops": stops,
+            "driver_name": request.form.get("driver_name"),
             # Placeholder defaults for removed fields
             "name": f"Bus {request.form.get('id')}",
             "lat": 12.9716, 
