@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Welcome</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+/* center box */
+
+.welcome-box {
+
+    margin-top:120px;
+
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(15px);
+
+    padding:40px;
+
+    border-radius:25px;
+
+    text-align:center;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.6),
+        0 0 20px rgba(255,224,130,0.5);
+
+    animation: pop 1s ease;
+
+}
+
+/* animation */
+
+@keyframes pop {
+
+    0% { transform: scale(0.7); opacity:0 }
+    100% { transform: scale(1); opacity:1 }
+
+}
+
+
+/* title */
+
+.welcome-title {
+
+    font-size:40px;
+
+    color:#ffe082;
+
+    text-shadow:
+        0 0 10px #ffe082,
+        0 0 20px #81d4fa;
+
+}
+
+
+/* text */
+
+.welcome-text {
+
+    margin-top:10px;
+    font-size:18px;
+    opacity:0.9;
+
+}
+
+
+/* button */
+
+.start-btn {
+
+    margin-top:25px;
+
+    padding:12px 30px;
+
+    border:none;
+
+    border-radius:15px;
+
+    font-family:Fredoka;
+
+    font-size:18px;
+
+    background: linear-gradient(
+        #fff8c4,
+        #ffe082
+    );
+
+    cursor:pointer;
+
+    transition:0.3s;
+
+    box-shadow:
+        0 0 10px #ffe082,
+        0 0 15px #81d4fa;
+
+}
+
+.start-btn:hover {
+
+    transform: scale(1.1);
+
+    box-shadow:
+        0 0 20px #ffe082,
+        0 0 30px #81d4fa;
+
+}
+
+
+/* floating bus */
+
+.bus-welcome {
+
+    position:absolute;
+
+    top:60px;
+
+    font-size:40px;
+
+    animation: moveBus 6s linear infinite;
+
+}
+
+@keyframes moveBus {
+
+    0% { left:-50px }
+    100% { left:100% }
+
+}
+
+</style>
+
+</head>
+<script>
+
+document.addEventListener("click", function(e) {
+
+    let bus = document.createElement("div");
+
+    bus.innerHTML = "🚌";
+
+    bus.style.position = "fixed";
+    bus.style.left = e.clientX + "px";
+    bus.style.top = e.clientY + "px";
+
+    bus.style.fontSize = "26px";
+
+    bus.style.pointerEvents = "none";
+
+    bus.style.transition = "all 0.5s ease";
+
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.transform = "translateY(-25px)";
+        bus.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 600);
+
+});
+
+</script>
+
+<body>
+
+<div class="bus-welcome">🚌</div>
+
+<h1>College Bus Time Tracker</h1>
+
+<div class="welcome-box">
+
+<div class="welcome-title">
+Welcome
+</div>
+
+<div class="welcome-text">
+Smart Real Time Bus Tracking System
+</div>
+
+<button class="start-btn"
+onclick="location.href='/home'">
+
+Start Tracking
+
+</button>
+
+</div>
+
+</body>
+
+</html>

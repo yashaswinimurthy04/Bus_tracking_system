@@ -130,6 +130,37 @@
           </div>
         </div>
 
+        <!-- Middle Panel: Controls -->
+        <div class="students-panel" style="flex: 0.8;">
+            <div class="panel-header">
+                <div class="panel-title">⚡ Update Status</div>
+            </div>
+            <form action="/update_bus" method="POST" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="input-group">
+                    <label class="input-label">Current Status</label>
+                    <select name="status" class="input-box" style="background:#1e293b;">
+                        <option value="Moving">On Route</option>
+                        <option value="Stopped">Stopped</option>
+                        <option value="Delayed">Delayed</option>
+                        <option value="Completed">Trip Ended</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Current Stop</label>
+                    <input type="text" name="current_stop" class="input-box" placeholder="e.g. Main Gate">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Occupancy (approx)</label>
+                    <input type="number" name="occupancy" class="input-box" placeholder="Count">
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:10px;">Broadcast Update</button>
+            </form>
+            
+            {% if request.args.get('msg') %}
+                <div class="badge" style="margin-top:20px; color:var(--cyan);">✓ {{ request.args.get('msg') }}</div>
+            {% endif %}
+        </div>
+
         <!-- Right Panel: Map -->
         <div class="map-panel">
           <div id="map"></div>

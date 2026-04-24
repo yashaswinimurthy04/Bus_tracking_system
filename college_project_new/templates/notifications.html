@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Notifications</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+body {
+    font-family: 'Segoe UI';
+}
+
+/* TITLE */
+.title {
+    text-align: center;
+    font-size: 36px;
+    color: #ffe082;
+    margin-top: 30px;
+}
+
+/* CONTAINER */
+.container {
+    width: 720px;
+    margin: 40px auto;
+    padding: 30px;
+
+    border-radius: 25px;
+
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(14px);
+
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* CARD */
+.note {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 18px 22px;
+
+    border-radius: 16px;
+
+    font-size: 16px;
+    color: white;
+
+    transition: 0.3s;
+    cursor: pointer;
+
+    animation: slideUp 0.4s ease;
+}
+
+/* COLORS */
+.note.green {
+    background: rgba(34,197,94,0.18);
+    border-left: 6px solid #22c55e;
+}
+
+.note.yellow {
+    background: rgba(255,224,130,0.18);
+    border-left: 6px solid #ffe082;
+}
+
+.note.red {
+    background: rgba(239,68,68,0.18);
+    border-left: 6px solid #ef4444;
+}
+
+/* HOVER */
+.note:hover {
+    transform: scale(1.03);
+    background: #ffe082;
+    color: black;
+    box-shadow: 0 0 15px #ffe082;
+}
+
+/* TEXT */
+.note-text {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* TIME */
+.time {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+/* NEW BADGE */
+.badge {
+    background: red;
+    color: white;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-left: 10px;
+}
+
+/* ANIMATION */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* DASHBOARD BUTTON */
+.back-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+
+    padding: 12px 20px;
+
+    background: #ffe082;
+    border-radius: 20px;
+
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px #ffe082;
+}
+
+</style>
+
+</head>
+
+<script>
+
+/* CLICK BUS EFFECT */
+document.addEventListener("click", function(e) {
+    let bus = document.createElement("div");
+    bus.innerHTML = "🚌";
+    bus.style.position = "fixed";
+    bus.style.left = e.clientX + "px";
+    bus.style.top = e.clientY + "px";
+    bus.style.fontSize = "26px";
+    bus.style.pointerEvents = "none";
+    bus.style.transition = "all 0.5s ease";
+
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.transform = "translateY(-25px)";
+        bus.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 600);
+});
+
+/* MOVING BUS */
+function movingBus() {
+    let bus = document.createElement("div");
+
+    bus.innerHTML = "🚌";
+    bus.style.position = "fixed";
+    bus.style.bottom = "10px";
+    bus.style.left = "-50px";
+    bus.style.fontSize = "28px";
+    bus.style.transition = "all 7s linear";
+
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.left = "110%";
+    }, 100);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 7200);
+}
+
+setInterval(movingBus, 12000);
+
+/* 🔴 REAL-TIME NOTIFICATION */
+function addLiveNotification() {
+
+    let messages = [
+        "🚌 Bus 1 just reached Kuvempunagar",
+        "🚌 Bus 2 is now at Ring Road",
+        "🚌 Bus 3 left Main Gate",
+        "⚠️ Traffic detected near Market",
+        "🟢 Bus 1 running smoothly"
+    ];
+
+    let randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+    let container = document.getElementById("noti-container");
+
+    let note = document.createElement("div");
+    note.className = "note green";
+
+    let now = new Date().toLocaleTimeString();
+
+    note.innerHTML = `
+        <div class="note-text">
+            ${randomMsg}
+            <span class="badge">NEW</span>
+        </div>
+        <div class="time">${now}</div>
+    `;
+
+    container.prepend(note);
+}
+
+/* AUTO ADD EVERY 8 SEC */
+setInterval(addLiveNotification, 8000);
+
+</script>
+
+<body>
+
+<div class="title">🔔 Notifications</div>
+
+<div class="container" id="noti-container">
+
+    <div class="note yellow">
+        <div class="note-text">📢 College will be closed tomorrow (Holiday)</div>
+        <div class="time">8:00 AM</div>
+    </div>
+
+    <div class="note green">
+        <div class="note-text">🚌 Bus is 2 stops away from Saraswathipuram</div>
+        <div class="time">8:20 AM</div>
+    </div>
+
+    <div class="note yellow">
+        <div class="note-text">⏰ Bus timing changed to 8:45 AM during exams</div>
+        <div class="time">7:50 AM</div>
+    </div>
+
+    <div class="note red">
+        <div class="note-text">🚨 Route changed due to road construction</div>
+        <div class="time">7:30 AM</div>
+    </div>
+
+    <div class="note green">
+        <div class="note-text">📢 Internal exams start from Monday</div>
+        <div class="time">Yesterday</div>
+    </div>
+
+    <div class="note yellow">
+        <div class="note-text">🚌 Bus 2 delayed by 10 minutes</div>
+        <div class="time">8:10 AM</div>
+    </div>
+
+    <div class="note green">
+        <div class="note-text">🟢 All buses running on time</div>
+        <div class="time">7:00 AM</div>
+    </div>
+
+    <div class="note red">
+        <div class="note-text">🚫 Bus 3 cancelled today</div>
+        <div class="time">6:45 AM</div>
+    </div>
+
+    <div class="note yellow">
+        <div class="note-text">⚠️ Heavy traffic near City Center</div>
+        <div class="time">8:05 AM</div>
+    </div>
+
+</div>
+
+<a href="/student" class="back-btn">⬅ Dashboard</a>
+
+</body>
+</html>

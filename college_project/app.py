@@ -116,22 +116,42 @@ def admin_login():
 # ---------- OTHER PAGES ----------
 @app.route("/bus_timing")
 def bus_timing():
-    return render_template("bus_timing.html")
+    try:
+        response = requests.get(f"{BACKEND_URL}/buses")
+        buses = response.json() if response.status_code == 200 else []
+        return render_template("bus_timing.html", buses=buses)
+    except:
+        return render_template("bus_timing.html", buses=[])
 
 
 @app.route("/route_details")
 def route_details():
-    return render_template("route_details.html")
+    try:
+        response = requests.get(f"{BACKEND_URL}/buses")
+        buses = response.json() if response.status_code == 200 else []
+        return render_template("route_details.html", buses=buses)
+    except:
+        return render_template("route_details.html", buses=[])
 
 
 @app.route("/notifications")
 def notifications():
-    return render_template("notifications.html")
+    try:
+        response = requests.get(f"{BACKEND_URL}/notifications")
+        notifications = response.json() if response.status_code == 200 else []
+        return render_template("notifications.html", notifications=notifications)
+    except:
+        return render_template("notifications.html", notifications=[])
 
 
 @app.route("/parent_notifications")
 def parent_notifications():
-    return render_template("parent_notifications.html")
+    try:
+        response = requests.get(f"{BACKEND_URL}/notifications")
+        notifications = response.json() if response.status_code == 200 else []
+        return render_template("parent_notifications.html", notifications=notifications)
+    except:
+        return render_template("parent_notifications.html", notifications=[])
 
 
 # ---------- API AUTH LOGIN ----------
@@ -165,6 +185,23 @@ def login():
             return f"<h2>❌ {message}</h2><a href='/{role}'>Go Back</a>"
     except Exception as e:
         return render_template("pending.html", error=str(e), role=role) # Fallback
+
+
+@app.route("/update_bus", methods=["POST"])
+def update_bus():
+    if "user" in session and session["user"]["role"] == "driver":
+        data = {
+            "bus_id": session["user"]["assigned_bus"],
+            "status": request.form.get("status"),
+            "current_stop": request.form.get("current_stop"),
+            "occupancy": request.form.get("occupancy")
+        }
+        try:
+            requests.post(f"{BACKEND_URL}/bus/update_status", json=data)
+            return redirect("/driver_dashboard?msg=Status updated")
+        except:
+            return redirect("/driver_dashboard?error=Update failed")
+    return redirect("/driver")
 
 
 # ---------- DASHBOARDS ----------

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Parent Dashboard</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+.dashboard-wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard-title {
+    position: absolute;
+    top: 40px;
+    font-size: 40px;
+    color: #ffe082;
+}
+
+.dashboard-card {
+
+    width: 330px;
+    padding: 25px;
+
+    border-radius: 20px;
+
+    background: rgba(255,255,255,0.15);
+
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu-btn {
+
+    padding: 12px;
+    border-radius: 12px;
+
+    background: rgba(255,255,255,0.25);
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.menu-btn:hover {
+
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.4);
+
+}
+
+</style>
+
+</head>
+<script>
+
+document.addEventListener("click", function(e) {
+
+    let bus = document.createElement("div");
+
+    bus.innerHTML = "🚌";
+
+    bus.style.position = "fixed";
+    bus.style.left = e.clientX + "px";
+    bus.style.top = e.clientY + "px";
+
+    bus.style.fontSize = "26px";
+
+    bus.style.pointerEvents = "none";
+
+    bus.style.transition = "all 0.5s ease";
+
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.transform = "translateY(-25px)";
+        bus.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 600);
+
+});
+
+</script>
+
+<body>
+
+<div class="dashboard-wrapper">
+
+<div class="dashboard-title">
+Parent Dashboard
+</div>
+
+<div class="dashboard-card">
+
+<div class="menu-btn">📍 Track Bus</div>
+
+<div class="menu-btn">⏰ Bus Timing</div>
+
+<a href="/parent_notifications" class="menu-btn">🔔 Notifications</a>
+
+<div class="menu-btn">👤 Child Profile</div>
+
+<div class="menu-btn">🚪 Logout</div>
+
+</div>
+
+</div>
+
+</body>
+</html>

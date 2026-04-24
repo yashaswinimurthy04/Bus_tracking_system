@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Route Details</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background: linear-gradient(135deg,#0f172a,#1e3a8a);
+    color:white;
+}
+
+/* TITLE */
+h1{
+    text-align:center;
+    margin-top:40px;
+    color:#ffe082;
+}
+
+/* CARD */
+.container{
+    width:900px;
+    margin:40px auto;
+    padding:40px;
+    border-radius:25px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(15px);
+    box-shadow:0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* 🔥 CUSTOM DROPDOWN */
+.dropdown{
+    position:relative;
+    margin-bottom:30px;
+}
+
+.dropdown-btn{
+    width:100%;
+    padding:15px;
+    border-radius:14px;
+    background:linear-gradient(45deg,#ffe082,#ffd54f);
+    color:black;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+/* FIXED DROPDOWN */
+.dropdown-list{
+    position:absolute;
+    width:100%;
+    background:#ffffff;
+    color:black;
+    border-radius:12px;
+    margin-top:8px;
+    display:none;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    z-index:999;
+}
+
+.dropdown-list div{
+    padding:12px;
+    cursor:pointer;
+}
+
+.dropdown-list div:hover{
+    background:#ffe082;
+}
+
+/* ROUTE TITLE */
+.route-title{
+    font-size:22px;
+    margin-bottom:20px;
+}
+
+/* TIMELINE */
+.timeline{
+    position:relative;
+    margin-left:40px;
+}
+
+/* LINE */
+.timeline::before{
+    content:'';
+    position:absolute;
+    left:10px;
+    top:0;
+    width:3px;
+    height:100%;
+    background:#ffffff40;
+}
+
+/* STOP */
+.stop{
+    position:relative;
+    margin-bottom:25px;
+    padding-left:50px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+/* DOT */
+.stop::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:5px;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#ff4d6d;
+}
+
+/* 🔥 HOVER ONLY (BUTTER EFFECT) */
+.stop:hover{
+    transform:translateX(10px);
+    background:#ffe082;
+    color:black;
+    padding:12px;
+    border-radius:12px;
+    box-shadow:0 0 20px #ffe082;
+}
+
+/* POPUP */
+.popup{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    color:black;
+    padding:25px;
+    border-radius:15px;
+    display:none;
+    width:320px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.6);
+}
+
+.close-btn{
+    float:right;
+    background:red;
+    color:white;
+    border:none;
+    border-radius:8px;
+    padding:5px 10px;
+    cursor:pointer;
+}
+
+/* BACK BUTTON */
+.back{
+    position:fixed;
+    bottom:20px;
+    left:20px;
+    background:#ffe082;
+    padding:10px 20px;
+    border-radius:20px;
+    text-decoration:none;
+    color:black;
+    font-weight:600;
+}
+
+/* BUS ANIMATION */
+.bus{
+    position:fixed;
+    bottom:30px;
+    left:-50px;
+    font-size:28px;
+    animation:move 12s linear infinite;
+}
+
+@keyframes move{
+    0%{left:-50px;}
+    100%{left:100%;}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🚌 Route Details</h1>
+
+<div class="container">
+
+<!-- DROPDOWN -->
+<div class="dropdown">
+    <div class="dropdown-btn" onclick="toggleDropdown()">
+        <span id="selectedBus">🚌 Bus 1</span>
+        ▼
+    </div>
+
+    <div class="dropdown-list" id="dropdownList">
+        <div onclick="selectBus(1)">🚌 Bus 1</div>
+        <div onclick="selectBus(2)">🚌 Bus 2</div>
+        <div onclick="selectBus(3)">🚌 Bus 3</div>
+    </div>
+</div>
+
+<div class="route-title" id="title">Bus 1 - Main Route</div>
+
+<div class="timeline" id="timeline"></div>
+
+</div>
+
+<a href="/student" class="back">⬅ Dashboard</a>
+
+<div class="bus">🚌</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+    <button class="close-btn" onclick="closePopup()">X</button>
+    <h3 id="stopName"></h3>
+    <div id="studentList"></div>
+</div>
+
+<script>
+
+/* CLICK BUS EFFECT */
+document.addEventListener("click", function(e){
+    let bus = document.createElement("div");
+    bus.innerHTML="🚌";
+    bus.style.position="fixed";
+    bus.style.left=e.clientX+"px";
+    bus.style.top=e.clientY+"px";
+    bus.style.fontSize="24px";
+    document.body.appendChild(bus);
+
+    setTimeout(()=>{bus.style.transform="translateY(-30px)"; bus.style.opacity="0";},50);
+    setTimeout(()=>bus.remove(),600);
+});
+
+/* DROPDOWN */
+function toggleDropdown(){
+    let list=document.getElementById("dropdownList");
+    list.style.display = list.style.display==="block"?"none":"block";
+}
+
+function selectBus(bus){
+    document.getElementById("selectedBus").innerText="🚌 Bus "+bus;
+    document.getElementById("dropdownList").style.display="none";
+    loadBus(bus);
+}
+
+/* DATA */
+let data={
+1:[
+["Main Gate",[["Rahul","9876"],["Ananya","9123"]]],
+["Kuvempunagar",[["Sneha","9871"]]],
+["Saraswathipuram",[["Kiran","9888"]]],
+["Vani Vilas",[["Rohit","9666"]]],
+["Lakshmipuram",[["Vikas","9444"]]],
+["Market",[["Ajay","9222"]]],
+["KR Circle",[["Manoj","9001"]]],
+["Railway",[["Sanjay","9023"]]],
+["Bus Stand",[["Nikhil","9045"]]],
+["College",[["All Students","--"]]]
+],
+
+2:[
+["Bogadi",[["Rahul","9876"]]],
+["Vijayanagar",[["Sneha","9871"]]],
+["Ring Road",[["Kiran","9888"]]],
+["KRS Road",[["Rohit","9666"]]],
+["Hebbal",[["Vikas","9444"]]],
+["Infosys",[["Ajay","9222"]]],
+["Metagalli",[["Manoj","9001"]]],
+["Industrial",[["Sanjay","9023"]]],
+["Signal",[["Nikhil","9045"]]],
+["College",[["All Students","--"]]]
+],
+
+3:[
+["Nazarbad",[["Rahul","9876"]]],
+["Ashoka Road",[["Sneha","9871"]]],
+["Double Road",[["Kiran","9888"]]],
+["JLB Road",[["Rohit","9666"]]],
+["Devaraj Urs",[["Vikas","9444"]]],
+["Circle",[["Ajay","9222"]]],
+["Mandi",[["Manoj","9001"]]],
+["Road",[["Sanjay","9023"]]],
+["Palace",[["Nikhil","9045"]]],
+["College",[["All Students","--"]]]
+]
+};
+
+/* LOAD */
+function loadBus(bus){
+    let stops=data[bus];
+    let html="";
+
+    stops.forEach(s=>{
+        html+=`<div class="stop" onclick="showPopup(${bus},'${s[0]}')">
+                📍 ${s[0]}
+               </div>`;
+    });
+
+    document.getElementById("timeline").innerHTML=html;
+}
+
+loadBus(1);
+
+/* POPUP */
+function showPopup(bus,name){
+    let students=data[bus].find(s=>s[0]===name)[1];
+    let list="";
+    students.forEach(st=>{
+        list+=`<p>👤 ${st[0]} - 📞 ${st[1]}</p>`;
+    });
+
+    document.getElementById("stopName").innerText=name;
+    document.getElementById("studentList").innerHTML=list;
+    document.getElementById("popup").style.display="block";
+}
+
+function closePopup(){
+    document.getElementById("popup").style.display="none";
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Student Dashboard</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+.dashboard-wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard-title {
+    position: absolute;
+    top: 40px;
+    font-size: 40px;
+    color: #ffe082;
+}
+
+.dashboard-card {
+    width: 350px;
+    padding: 25px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* user info box */
+.user-info {
+    background: rgba(0,0,0,0.3);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+/* buttons */
+.menu-btn {
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: 0.3s;
+    text-decoration: none;
+    color: white;
+    display: block;
+    text-align: left;
+}
+
+.menu-btn:hover {
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.4);
+}
+
+</style>
+
+</head>
+
+<script>
+document.addEventListener("click", function(e) {
+
+    let bus = document.createElement("div");
+
+    bus.innerHTML = "🚌";
+
+    bus.style.position = "fixed";
+    bus.style.left = e.clientX + "px";
+    bus.style.top = e.clientY + "px";
+
+    bus.style.fontSize = "26px";
+    bus.style.pointerEvents = "none";
+    bus.style.transition = "all 0.5s ease";
+
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.transform = "translateY(-25px)";
+        bus.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 600);
+
+});
+</script>
+
+<body>
+
+<div class="dashboard-wrapper">
+
+<div class="dashboard-title">
+🎓 Student Dashboard
+</div>
+
+<div class="dashboard-card">
+
+    <!-- ✅ SAFE USER INFO -->
+    <div class="user-info">
+        <h3>👋 Welcome {{ user.username if user else "Student" }}</h3>
+        <p>🚌 Bus: Bus 1</p>
+        <p>📍 Stop: Bogadi</p>
+    </div>
+
+    <!-- ✅ BUTTONS -->
+    <a href="/tracking?bus=1" class="menu-btn">
+        📍 Track Bus
+    </a>
+
+    <a href="/bus_timing" class="menu-btn">
+        ⏰ Bus Timing
+    </a>
+
+    <a href="/route_details" class="menu-btn">
+        🛣 Route Details
+    </a>
+
+    <a href="/notifications" class="menu-btn">
+        🔔 Notifications
+    </a>
+
+    <a href="/profile" class="menu-btn">
+        👤 Profile
+    </a>
+
+    <a href="/logout" class="menu-btn">
+        🚪 Logout
+    </a>
+
+</div>
+
+</div>
+
+</body>
+</html>

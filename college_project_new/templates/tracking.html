@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bus 1 Tracking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --bg: #0b0f1c;
+    --surface: #121929;
+    --surface2: #19243a;
+    --border: #1f2e47;
+    --accent: #fbbf24;
+    --accent2: #60a5fa;
+    --green: #34d399;
+    --red: #f87171;
+    --text: #f0f4ff;
+    --muted: #5a6e8c;
+    --sub: #8ba0bc;
+    --font: 'Nunito', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .bus-badge {
+    background: var(--accent);
+    color: #0b0f1c;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 3px 11px;
+    border-radius: 99px;
+    letter-spacing: .3px;
+  }
+  .route-label { font-size: 13px; color: var(--sub); font-weight: 600; }
+  .live-pill {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700;
+    color: var(--green);
+    background: rgba(52,211,153,.1);
+    border: 1px solid rgba(52,211,153,.25);
+    padding: 3px 10px;
+    border-radius: 99px;
+  }
+  .live-pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: blink 1.4s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .clock { font-size: 12px; font-weight: 600; color: var(--sub); }
+
+  /* ── LAYOUT ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 295px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sec { padding: 15px 16px; border-bottom: 1px solid var(--border); }
+  .sec-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 9px;
+  }
+
+  /* status */
+  .status-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 13px;
+  }
+  .status-text { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 3px; }
+  .status-sub { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+  /* stop cards */
+  .stop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stop-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .stop-card.cur { border-color: var(--accent); }
+  .stop-card.nxt { border-color: var(--accent2); }
+  .stop-card-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .stop-card.cur .stop-card-label { color: var(--accent); }
+  .stop-card.nxt .stop-card-label { color: var(--accent2); }
+  .stop-card-name { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; }
+
+  /* eta */
+  .eta-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .eta-num { font-size: 30px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .eta-unit { font-size: 12px; color: var(--sub); font-weight: 600; margin-top: 2px; }
+  .speed-pill {
+    background: rgba(96,165,250,.12);
+    border: 1px solid rgba(96,165,250,.28);
+    color: var(--accent2);
+    font-size: 12px; font-weight: 700;
+    padding: 5px 11px;
+    border-radius: 99px;
+  }
+
+  /* route progress */
+  .route-list { display: flex; flex-direction: column; }
+  .rrow { display: flex; align-items: flex-start; gap: 9px; padding: 4px 0; }
+  .rdot-col { display: flex; flex-direction: column; align-items: center; width: 14px; padding-top: 3px; flex-shrink: 0; }
+  .rdot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid var(--muted); background: var(--border);
+  }
+  .rdot.done { background: var(--green); border-color: var(--green); }
+  .rdot.here { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px rgba(251,191,36,.7); }
+  .rline { width: 2px; height: 16px; background: var(--border); margin: 2px 0; }
+  .rline.done { background: var(--green); }
+  .rname { font-size: 13px; font-weight: 600; color: var(--sub); padding-top: 1px; }
+  .rname.done { color: var(--green); }
+  .rname.here { color: var(--accent); font-weight: 700; }
+  .reta { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted); padding-top: 2px; flex-shrink: 0; }
+  .reta.here { color: var(--accent); }
+
+  /* arriving banner */
+  .arriving-banner {
+    background: linear-gradient(135deg, rgba(251,191,36,.15), rgba(251,191,36,.05));
+    border: 1.5px solid rgba(251,191,36,.5);
+    border-radius: 12px;
+    padding: 11px 13px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+  .arriving-banner.show { display: flex; animation: slideIn .4s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .arriving-icon { font-size: 22px; flex-shrink: 0; }
+  .arriving-text { font-size: 12px; font-weight: 700; color: var(--accent); line-height: 1.4; }
+  .arriving-sub { font-size: 11px; font-weight: 600; color: var(--sub); }
+
+  /* absent btn */
+  .absent-btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 99px;
+    border: 2px solid var(--red);
+    background: rgba(248,113,113,.08);
+    color: var(--red);
+    font-family: var(--font);
+    font-size: 13px; font-weight: 800;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .2px;
+  }
+  .absent-btn:hover { background: rgba(248,113,113,.18); }
+  .absent-btn:disabled {
+    opacity: .45; cursor: not-allowed;
+    border-color: var(--muted); color: var(--muted);
+    background: transparent;
+  }
+  .absent-done { text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); margin-top: 7px; }
+
+  /* map */
+  #map { flex: 1; }
+
+  /* notification toast */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 20px;
+    width: 285px;
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+    border-radius: 16px;
+    padding: 13px 15px;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,.55);
+    transform: translateY(120px);
+    opacity: 0;
+    transition: transform .45s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .toast-title { font-size: 13px; font-weight: 800; color: var(--accent); }
+  .toast-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; }
+  .toast-body { font-size: 12px; font-weight: 600; color: var(--sub); line-height: 1.5; }
+  .toast-badge {
+    display: inline-block; margin-top: 7px;
+    background: rgba(251,191,36,.14); border: 1px solid rgba(251,191,36,.3);
+    color: var(--accent); font-size: 11px; font-weight: 800;
+    padding: 3px 10px; border-radius: 99px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="bus-badge">BUS 1</span>
+    <span class="route-label">Main Gate → Your Stop</span>
+  </div>
+  <div class="live-pill">LIVE</div>
+  <div class="clock" id="clock">--:-- --</div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+
+    <div class="sec">
+      <div class="sec-label">Live Status</div>
+      <div class="status-card">
+        <div class="status-text" id="statusText">Moving towards Stop 2</div>
+        <div class="status-sub" id="statusSub">Updated just now</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Stops</div>
+      <div class="stop-grid">
+        <div class="stop-card cur"><div class="stop-card-label">Current</div><div class="stop-card-name" id="curStop">Main Gate</div></div>
+        <div class="stop-card nxt"><div class="stop-card-label">Next</div><div class="stop-card-name" id="nxtStop">Stop 2</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">ETA to Your Stop</div>
+      <div class="eta-row">
+        <div>
+          <div class="eta-num" id="etaNum">9</div>
+          <div class="eta-unit">mins away</div>
+        </div>
+        <div class="speed-pill" id="speedPill">26 km/h</div>
+      </div>
+    </div>
+
+    <!-- arriving soon banner -->
+    <div class="sec">
+      <div class="arriving-banner" id="arrivingBanner">
+        <div class="arriving-icon">🚨</div>
+        <div>
+          <div class="arriving-text">Bus is almost here!</div>
+          <div class="arriving-sub">Head to your stop now</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Route</div>
+      <div class="route-list" id="routeList"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-label">Today's Attendance</div>
+      <button class="absent-btn" id="absentBtn" onclick="markAbsent()">Mark Myself Absent 🙅</button>
+      <div class="absent-done" id="absentDone" style="display:none">✓ Driver notified — stop will be skipped!</div>
+    </div>
+
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast">
+  <div class="toast-head">
+    <div class="toast-title">🚌 Bus is coming!</div>
+    <button class="toast-close" onclick="hideToast()">✕</button>
+  </div>
+  <div class="toast-body" id="toastBody">Your bus is approaching Stop 3!</div>
+  <div class="toast-badge" id="toastBadge">ETA: 2 min</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// STOPS  (student's stop = index 3 = "Your Stop")
+// ─────────────────────────────────────────────
+const MY_STOP_IDX = 3; // bus halts here
+
+const stops = [
+  { name: "Main Gate",   lat: 12.29580, lng: 76.63940 },
+  { name: "Stop 2",      lat: 12.29920, lng: 76.64550 },
+  { name: "Stop 3",      lat: 12.30280, lng: 76.64920 },
+  { name: "Your Stop ★", lat: 12.30650, lng: 76.65380 }, // ← student gets on here
+  { name: "College",     lat: 12.31380, lng: 76.66010 }, // shown on map but bus won't go there
+];
+
+// ─────────────────────────────────────────────
+// ZIGZAG ROAD PATH  (matches the sketch: left-right-left turns)
+// The route snakes like real streets instead of going diagonal.
+// Each segment turns, corners, curves — no straight diagonals.
+// ─────────────────────────────────────────────
+const rawPath = [
+  // ══ DEPART Main Gate — head EAST along bottom road ══
+  [12.29580, 76.63940],
+  [12.29582, 76.63985],
+  [12.29584, 76.64030],
+  [12.29586, 76.64075],
+  [12.29587, 76.64118],
+  [12.29586, 76.64158],
+  [12.29584, 76.64195],
+  [12.29580, 76.64228],
+  [12.29575, 76.64258],
+  [12.29568, 76.64284],
+
+  // ══ TURN NORTH — go up a street ══
+  [12.29580, 76.64292],
+  [12.29600, 76.64296],
+  [12.29622, 76.64298],
+  [12.29645, 76.64299],
+  [12.29668, 76.64298],
+  [12.29692, 76.64295],
+  [12.29716, 76.64291],
+  [12.29740, 76.64288],
+  [12.29762, 76.64287],
+  [12.29782, 76.64288],
+
+  // ══ ★ near Stop 2 — TURN EAST again ══
+  [12.29800, 76.64300],  // stop-2 approach
+  [12.29818, 76.64320],
+  [12.29836, 76.64345],
+  [12.29854, 76.64372],
+  [12.29870, 76.64400],
+  [12.29885, 76.64428],
+  [12.29898, 76.64458],
+  [12.29910, 76.64488],
+  [12.29920, 76.64520],
+  [12.29922, 76.64550], // ★ STOP 2
+
+  // ══ TURN NORTH again — up another block ══
+  [12.29928, 76.64568],
+  [12.29940, 76.64578],
+  [12.29958, 76.64582],
+  [12.29978, 76.64582],
+  [12.30000, 76.64580],
+  [12.30022, 76.64576],
+  [12.30045, 76.64572],
+  [12.30068, 76.64569],
+  [12.30090, 76.64568],
+  [12.30112, 76.64568],
+  [12.30132, 76.64570],
+  [12.30150, 76.64574],
+
+  // ══ TURN EAST — cross over ══
+  [12.30162, 76.64590],
+  [12.30172, 76.64612],
+  [12.30180, 76.64636],
+  [12.30186, 76.64662],
+  [12.30192, 76.64690],
+  [12.30196, 76.64718],
+  [12.30200, 76.64746],
+  [12.30204, 76.64774],
+  [12.30208, 76.64800],
+  [12.30214, 76.64824],
+  [12.30221, 76.64848],
+  [12.30230, 76.64872],
+  [12.30240, 76.64895],
+  [12.30252, 76.64916],
+  [12.30266, 76.64920], // ★ near Stop 3
+  [12.30280, 76.64920], // ★ STOP 3
+
+  // ══ TURN NORTH ══
+  [12.30298, 76.64924],
+  [12.30318, 76.64926],
+  [12.30340, 76.64925],
+  [12.30362, 76.64921],
+  [12.30384, 76.64916],
+  [12.30406, 76.64912],
+  [12.30428, 76.64910],
+  [12.30450, 76.64910],
+  [12.30470, 76.64912],
+
+  // ══ TURN EAST toward Your Stop ══
+  [12.30482, 76.64928],
+  [12.30492, 76.64950],
+  [12.30500, 76.64974],
+  [12.30508, 76.65000],
+  [12.30515, 76.65028],
+  [12.30522, 76.65058],
+  [12.30530, 76.65090],
+  [12.30538, 76.65122],
+  [12.30547, 76.65154],
+  [12.30558, 76.65184],
+  [12.30570, 76.65212],
+  [12.30584, 76.65238],
+  [12.30600, 76.65262],
+  [12.30617, 76.65284],
+  [12.30634, 76.65304],
+  [12.30648, 76.65322],
+  [12.30650, 76.65338],
+  [12.30650, 76.65358],
+  [12.30650, 76.65378], // ★ YOUR STOP — bus halts here
+];
+
+// Stop arrival indices into rawPath
+const stopIdx = [0, 29, 55, rawPath.length - 1];
+
+// ─────────────────────────────────────────────
+// MAP INIT
+// ─────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true, attributionControl: false })
+  .setView([12.3012, 76.6465], 15);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+// Full route line (only up to YOUR stop)
+const routeLine = L.polyline(rawPath, {
+  color: '#fbbf24', weight: 4, opacity: 0.35, dashArray: '9 6'
+}).addTo(map);
+
+// Ghost line to college (just so college marker shows context)
+L.polyline(
+  [[rawPath[rawPath.length-1][0], rawPath[rawPath.length-1][1]], [stops[4].lat, stops[4].lng]],
+  { color: '#5a6e8c', weight: 2, opacity: 0.25, dashArray: '4 6' }
+).addTo(map);
+
+// Passed (green trail)
+const passedLine = L.polyline([], { color: '#34d399', weight: 4, opacity: 0.92 }).addTo(map);
+
+// ── stop marker icons ──
+function makeStopIcon(state, isYours) {
+  const colors = { done:'#34d399', here:'#fbbf24', future:'#1f2e47', yours:'#f87171', dest:'#475569' };
+  const borders = { done:'#34d399', here:'#fbbf24', future:'#5a6e8c', yours:'#f87171', dest:'#64748b' };
+  const sz = (state === 'here' || isYours) ? 16 : 11;
+  const glow = state === 'here' ? 'box-shadow:0 0 12px rgba(251,191,36,.9);' : isYours ? 'box-shadow:0 0 10px rgba(248,113,113,.7);' : '';
+  const col = isYours ? colors.yours : colors[state];
+  const brd = isYours ? borders.yours : borders[state];
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${sz}px;height:${sz}px;background:${col};border:2.5px solid ${brd};border-radius:50%;${glow}"></div>`,
+    iconSize: [sz, sz], iconAnchor: [sz/2, sz/2],
+  });
+}
+
+// Only show stops 0-3 (not college on the route markers)
+const stopMarkers = stops.slice(0, 4).map((s, i) => {
+  const isYours = i === MY_STOP_IDX;
+  return L.marker([s.lat, s.lng], { icon: makeStopIcon('future', isYours) })
+    .addTo(map)
+    .bindTooltip(s.name, { permanent: true, direction: i % 2 === 0 ? 'left' : 'right', className: 'stt' });
+});
+
+// College marker (faint, just for reference)
+L.marker([stops[4].lat, stops[4].lng], {
+  icon: L.divIcon({
+    className: '',
+    html: `<div style="width:10px;height:10px;background:#334155;border:2px solid #475569;border-radius:50%;"></div>`,
+    iconSize: [10,10], iconAnchor: [5,5],
+  })
+}).addTo(map).bindTooltip('College (destination)', { permanent: false, direction: 'top', className: 'stt' });
+
+// Bus marker
+const busIcon = L.divIcon({
+  className: '',
+  html: `<div style="background:#fbbf24;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid #fff;box-shadow:0 2px 18px rgba(251,191,36,.85);">🚌</div>`,
+  iconSize: [38,38], iconAnchor: [19,19],
+});
+const busMk = L.marker([rawPath[0][0], rawPath[0][1]], { icon: busIcon, zIndexOffset: 1000 }).addTo(map);
+
+// ─────────────────────────────────────────────
+// SIDEBAR HELPERS
+// ─────────────────────────────────────────────
+function renderRouteList(curSIdx) {
+  const c = document.getElementById('routeList');
+  c.innerHTML = '';
+  stops.slice(0, 4).forEach((s, i) => {
+    const done = i < curSIdx, here = i === curSIdx, last = i === 3;
+    const ptsLeft = Math.max(0, stopIdx[Math.min(i, stopIdx.length-1)] - pathIdx);
+    const mins = Math.ceil(ptsLeft / 5);
+
+    const row = document.createElement('div'); row.className = 'rrow';
+    const dc = document.createElement('div'); dc.className = 'rdot-col';
+    const dot = document.createElement('div');
+    dot.className = 'rdot' + (done ? ' done' : here ? ' here' : '');
+    dc.appendChild(dot);
+    if (!last) {
+      const ln = document.createElement('div');
+      ln.className = 'rline' + (done ? ' done' : '');
+      dc.appendChild(ln);
+    }
+    const nm = document.createElement('div');
+    nm.className = 'rname' + (done ? ' done' : here ? ' here' : '');
+    nm.textContent = s.name;
+    const et = document.createElement('div');
+    et.className = 'reta' + (here ? ' here' : '');
+    et.textContent = done ? '✓' : here ? 'HERE' : `~${mins}m`;
+
+    row.appendChild(dc); row.appendChild(nm); row.appendChild(et);
+    c.appendChild(row);
+  });
+}
+
+function getStopIdx(pIdx) {
+  for (let i = stopIdx.length - 1; i >= 0; i--) {
+    if (pIdx >= stopIdx[i]) return i;
+  }
+  return 0;
+}
+
+let lastSIdx = -1;
+function updateSidebar(sIdx) {
+  const cur = stops[sIdx];
+  const nxt = stops[Math.min(sIdx + 1, 3)];
+  const ptsLeft = rawPath.length - pathIdx;
+  const eta = Math.max(1, Math.ceil(ptsLeft / 5));
+
+  document.getElementById('curStop').textContent = cur.name;
+  document.getElementById('nxtStop').textContent = nxt.name;
+  document.getElementById('etaNum').textContent = eta;
+  document.getElementById('statusText').textContent =
+    sIdx >= 3 ? '🎉 Arrived at your stop!' : `Moving towards ${nxt.name}`;
+  document.getElementById('speedPill').textContent = (20 + Math.random() * 10).toFixed(0) + ' km/h';
+
+  // Show arriving banner when 1 stop away
+  if (sIdx === MY_STOP_IDX - 1) {
+    document.getElementById('arrivingBanner').classList.add('show');
+  }
+  renderRouteList(sIdx);
+}
+
+// ─────────────────────────────────────────────
+// ANIMATION — slow speed
+// ─────────────────────────────────────────────
+let pathIdx = 0;
+const notifDone = new Set();
+let busHalted = false;
+
+function animate() {
+  if (busHalted) return;
+  if (pathIdx >= rawPath.length) {
+    // bus arrived at YOUR stop — show final state
+    busHalted = true;
+    updateSidebar(MY_STOP_IDX);
+    showToast("You're at your stop!", "Bus has arrived. Board now! 🎉", "Now");
+    stopMarkers[MY_STOP_IDX].setIcon(makeStopIcon('here', true));
+    return;
+  }
+
+  const pt = rawPath[pathIdx];
+  busMk.setLatLng([pt[0], pt[1]]);
+
+  if (pathIdx % 5 === 0) map.panTo([pt[0], pt[1]], { animate: true, duration: 0.8 });
+  if (pathIdx % 2 === 0) passedLine.setLatLngs(rawPath.slice(0, pathIdx + 1));
+
+  const sIdx = getStopIdx(pathIdx);
+  if (sIdx !== lastSIdx) {
+    lastSIdx = sIdx;
+    updateSidebar(sIdx);
+    stopMarkers.forEach((m, i) => {
+      const state = i < sIdx ? 'done' : i === sIdx ? 'here' : 'future';
+      m.setIcon(makeStopIcon(state, i === MY_STOP_IDX));
+    });
+  }
+
+  // notification 8 pts before each stop
+  stops.slice(0, 4).forEach((s, i) => {
+    if (i === 0) return;
+    const trig = stopIdx[i] - 8;
+    if (pathIdx === trig && !notifDone.has(i)) {
+      notifDone.add(i);
+      showToast(
+        i === MY_STOP_IDX ? "🚨 Your stop is next!" : "🚌 Next stop approaching",
+        i === MY_STOP_IDX ? `Bus is almost at <strong>${s.name}</strong>! Get ready to board!` : `Bus approaching ${s.name}`,
+        "~1 min"
+      );
+    }
+  });
+
+  pathIdx++;
+  setTimeout(animate, 320); // ← slow, feels real
+}
+
+function showToast(title, body, badge) {
+  document.querySelector('.toast-title').textContent = title;
+  document.getElementById('toastBody').innerHTML = body;
+  document.getElementById('toastBadge').textContent = `ETA: ${badge}`;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 6000);
+}
+function hideToast() { document.getElementById('toast').classList.remove('show'); }
+
+function markAbsent() {
+  document.getElementById('absentBtn').disabled = true;
+  document.getElementById('absentBtn').textContent = 'Marked Absent 🙅';
+  document.getElementById('absentDone').style.display = 'block';
+  showToast("Absence noted!", "Your driver has been notified. Stop will be skipped.", "N/A");
+  document.getElementById('toast').style.borderColor = 'var(--red)';
+  document.querySelector('.toast-title').style.color = 'var(--red)';
+}
+
+// clock
+function tickClock() {
+  const n = new Date(), h = n.getHours(), m = String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${String(h%12||12)}:${m} ${h>=12?'PM':'AM'}`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+// tooltip style
+const stel = document.createElement('style');
+stel.textContent = `.stt{background:#121929!important;border:1px solid #1f2e47!important;color:#8ba0bc!important;font-family:'Nunito',sans-serif!important;font-size:11px!important;font-weight:700!important;padding:3px 9px!important;border-radius:8px!important;box-shadow:none!important;white-space:nowrap!important;}.stt::before,.leaflet-tooltip-top::before,.leaflet-tooltip-left::before,.leaflet-tooltip-right::before{display:none!important;}`;
+document.head.appendChild(stel);
+
+document.getElementById('map').style.filter = 'brightness(0.82) contrast(1.1) saturate(0.85)';
+
+// init
+renderRouteList(0);
+updateSidebar(0);
+map.fitBounds(routeLine.getBounds(), { padding: [55, 55] });
+setTimeout(animate, 1500);
+</script>
+</body>
+</html>

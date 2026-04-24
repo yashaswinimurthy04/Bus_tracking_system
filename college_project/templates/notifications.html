@@ -177,70 +177,19 @@
         </div>
 
         <div class="notif-list" id="noti-container">
-          <div class="note yellow">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text"
-                >College will be closed tomorrow (Holiday)</span
-              >
+          {% if notifications %}
+            {% for n in notifications %}
+            <div class="note {% if 'delay' in n.message.lower() %}yellow{% elif 'cancelled' in n.message.lower() %}red{% else %}green{% endif %}">
+              <div class="note-left">
+                <span class="note-dot"></span>
+                <span class="note-text">{{ n.message }}</span>
+              </div>
+              <span class="note-time">{{ n.timestamp }}</span>
             </div>
-            <span class="note-time">8:00 AM</span>
-          </div>
-          <div class="note green">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text"
-                >Bus is 2 stops away from Saraswathipuram</span
-              >
-            </div>
-            <span class="note-time">8:20 AM</span>
-          </div>
-          <div class="note yellow">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text"
-                >Bus timing changed to 8:45 AM during exams</span
-              >
-            </div>
-            <span class="note-time">7:50 AM</span>
-          </div>
-          <div class="note red">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text"
-                >Route changed due to road construction</span
-              >
-            </div>
-            <span class="note-time">7:30 AM</span>
-          </div>
-          <div class="note green">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text">Internal exams start from Monday</span>
-            </div>
-            <span class="note-time">Yesterday</span>
-          </div>
-          <div class="note yellow">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text">Bus 2 delayed by 10 minutes</span>
-            </div>
-            <span class="note-time">8:10 AM</span>
-          </div>
-          <div class="note green">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text">All buses running on time</span>
-            </div>
-            <span class="note-time">7:00 AM</span>
-          </div>
-          <div class="note red">
-            <div class="note-left">
-              <span class="note-dot"></span
-              ><span class="note-text">Bus 3 cancelled today</span>
-            </div>
-            <span class="note-time">6:45 AM</span>
-          </div>
+            {% endfor %}
+          {% else %}
+            <p style="text-align:center; opacity:0.5; margin-top:50px;">No notifications yet.</p>
+          {% endif %}
         </div>
       </div>
     </div>

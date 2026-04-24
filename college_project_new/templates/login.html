@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Login</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+.login-card {
+    margin-top: 120px;
+    width: 340px;
+    padding: 30px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    text-align: center;
+}
+
+.input-box {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    outline: none;
+    transition: 0.3s;
+}
+
+.input-box::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.input-box:hover {
+    transform: scale(1.05);
+    box-shadow:
+        0 0 10px #81d4fa,
+        0 0 15px #ffe082;
+}
+
+.input-box:focus {
+    transform: scale(1.07);
+    background: rgba(255,255,255,0.3);
+    box-shadow:
+        0 0 12px #81d4fa,
+        0 0 20px #ffe082;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.toggle-eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 20px;
+    border: none;
+    background: linear-gradient(90deg, #ffe082, #facc15);
+    color: black;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+}
+
+.login-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 12px 30px rgba(255, 215, 0, 0.7);
+}
+
+.loader {
+    border: 3px solid #fff;
+    border-top: 3px solid #000;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ffe082;
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: none;
+    box-shadow: 0 0 10px black;
+}
+
+</style>
+
+</head>
+
+<script>
+
+document.addEventListener("click", function(e) {
+    let bus = document.createElement("div");
+    bus.innerHTML = "🚌";
+    bus.style.position = "fixed";
+    bus.style.left = e.clientX + "px";
+    bus.style.top = e.clientY + "px";
+    bus.style.fontSize = "26px";
+    bus.style.pointerEvents = "none";
+    bus.style.transition = "all 0.5s ease";
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.transform = "translateY(-25px)";
+        bus.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 600);
+});
+
+function togglePassword() {
+    let pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+}
+
+</script>
+
+<body>
+
+<h1>College Bus Time Tracker</h1>
+
+<div class="notification" id="note">
+Login Processing...
+</div>
+
+<div class="login-card">
+
+<h2>{{ role|capitalize }} Login</h2>
+
+<form method="POST" action="/login" onsubmit="startLoading()">
+
+<input class="input-box" type="text" name="username" placeholder="Username" required>
+
+<div class="password-wrapper">
+    <input id="password" class="input-box" type="password" name="password" placeholder="Password" required>
+    <span class="toggle-eye" onclick="togglePassword()">👁️</span>
+</div>
+
+<!-- ✅ IMPORTANT (KEEP THIS) -->
+<input type="hidden" name="role" value="{{ role }}">
+
+<button id="loginBtn" class="login-btn" type="submit">
+Login
+</button>
+
+</form>
+
+</div>
+
+<script>
+
+function startLoading(){
+    let btn = document.getElementById("loginBtn");
+    btn.innerHTML = '<div class="loader"></div>';
+    document.getElementById("note").style.display = "block";
+}
+
+window.addEventListener("pageshow", function(){
+    let btn = document.getElementById("loginBtn");
+    if(btn) btn.innerHTML = "Login";
+
+    let note = document.getElementById("note");
+    if(note) note.style.display = "none";
+});
+
+</script>
+
+</body>
+</html>

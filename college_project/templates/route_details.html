@@ -281,62 +281,27 @@
 
     <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
     <script>
-      const data = {
-        1: [
-          [
-            "Main Gate",
-            [
-              ["Rahul", "9876543210"],
-              ["Ananya", "9123456789"],
-            ],
-          ],
-          ["Kuvempunagar", [["Sneha", "9871234567"]]],
-          ["Saraswathipuram", [["Kiran", "9888765432"]]],
-          ["Vani Vilas", [["Rohit", "9666543210"]]],
-          ["Lakshmipuram", [["Vikas", "9444321098"]]],
-          ["Market", [["Ajay", "9222109876"]]],
-          ["KR Circle", [["Manoj", "9001234567"]]],
-          ["Railway", [["Sanjay", "9023456789"]]],
-          ["Bus Stand", [["Nikhil", "9045678901"]]],
-          ["College", [["All Students", "--"]]],
-        ],
-        2: [
-          ["Bogadi", [["Rahul", "9876543210"]]],
-          ["Vijayanagar", [["Sneha", "9871234567"]]],
-          ["Ring Road", [["Kiran", "9888765432"]]],
-          ["KRS Road", [["Rohit", "9666543210"]]],
-          ["Hebbal", [["Vikas", "9444321098"]]],
-          ["Infosys", [["Ajay", "9222109876"]]],
-          ["Metagalli", [["Manoj", "9001234567"]]],
-          ["Industrial", [["Sanjay", "9023456789"]]],
-          ["Signal", [["Nikhil", "9045678901"]]],
-          ["College", [["All Students", "--"]]],
-        ],
-        3: [
-          ["Nazarbad", [["Rahul", "9876543210"]]],
-          ["Ashoka Road", [["Sneha", "9871234567"]]],
-          ["Double Road", [["Kiran", "9888765432"]]],
-          ["JLB Road", [["Rohit", "9666543210"]]],
-          ["Devaraj Urs", [["Vikas", "9444321098"]]],
-          ["Circle", [["Ajay", "9222109876"]]],
-          ["Mandi", [["Manoj", "9001234567"]]],
-          ["Road", [["Sanjay", "9023456789"]]],
-          ["Palace", [["Nikhil", "9045678901"]]],
-          ["College", [["All Students", "--"]]],
-        ],
-      };
-      const routeNames = {
-        1: "Bus 1 — Main Route",
-        2: "Bus 2 — Ring Route",
-        3: "Bus 3 — City Route",
-      };
-      let activeBus = 1;
+      const rawBuses = {{ buses|tojson }};
+      const data = {};
+      const routeNames = {};
+      
+      rawBuses.forEach(b => {
+          data[b.id] = b.stops.map(s => [s, []]); // We can add students per stop later
+          routeNames[b.id] = b.name + " — " + (b.route_name || "Route");
+      });
+
+      let activeBus = Object.keys(data)[0] || 1;
+
       function selectBus(id) {
+        if (!data[id]) return;
         activeBus = id;
         document
           .querySelectorAll(".bus-tab")
           .forEach((t) => t.classList.remove("active"));
-        document.getElementById("tab-" + id).classList.add("active");
+        
+        const tabEl = document.getElementById("tab-" + id);
+        if (tabEl) tabEl.classList.add("active");
+        
         document.getElementById("routeLabel").textContent = routeNames[id];
         const stops = data[id];
         document.getElementById("timeline").innerHTML = stops
@@ -349,24 +314,32 @@
           )
           .join("");
       }
+
       function showPopup(bus, name) {
         document.getElementById("popupStop").textContent = name;
-        const students = data[bus].find((s) => s[0] === name)[1];
-        document.getElementById("studentList").innerHTML = students
-          .map(
+        const stopData = data[bus].find((s) => s[0] === name);
+        const students = stopData ? stopData[1] : [];
+        
+        document.getElementById("studentList").innerHTML = students.length > 0 
+          ? students.map(
             ([n, p]) => `
     <div class="student-row">
       <div class="student-avatar">${n[0]}</div>
       <div><div class="student-name">${n}</div><div class="student-phone">${p}</div></div>
     </div>`,
-          )
-          .join("");
+          ).join("") : '<p style="font-size:13px; opacity:0.6; text-align:center; padding:20px;">No specific students registered for this stop.</p>';
+        
         document.getElementById("overlay").classList.add("show");
       }
+
       function closePopup() {
         document.getElementById("overlay").classList.remove("show");
       }
-      selectBus(1);
+
+      // Initial Load
+      if (Object.keys(data).length > 0) {
+          selectBus(Object.keys(data)[0]);
+      }
     </script>
   </body>
 </html>

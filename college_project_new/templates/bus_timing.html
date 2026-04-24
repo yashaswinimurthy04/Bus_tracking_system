@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bus Timing</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI';
+    background: linear-gradient(135deg, #0f172a, #1e3a8a);
+    color: white;
+}
+
+/* HEADER */
+.header {
+    text-align: center;
+    padding: 25px;
+    font-size: 34px;
+    font-weight: bold;
+    color: #ffe082;
+}
+
+/* CONTAINER */
+.container {
+    width: 720px;
+    margin: auto;
+    padding: 35px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* DROPDOWN */
+.custom-dropdown {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.selected {
+    padding: 18px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #ffe082, #facc15);
+    color: black;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(255,215,0,0.3);
+}
+
+.arrow {
+    float: right;
+}
+
+.options {
+    display: none;
+    position: absolute;
+    width: 100%;
+    background: #1e293b;
+    border-radius: 12px;
+    margin-top: 10px;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.options div {
+    padding: 15px;
+    cursor: pointer;
+}
+
+.options div:hover {
+    background: linear-gradient(90deg, #ffe082, #facc15);
+    color: black;
+}
+
+/* INFO */
+.info {
+    line-height: 1.8;
+}
+
+/* STOPS */
+.stop {
+    background: rgba(255,255,255,0.2);
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.stop:hover {
+    background: linear-gradient(90deg, #ffe082, #facc15);
+    color: black;
+    transform: scale(1.03);
+}
+
+/* ACTIVE STOP (BUS CURRENT LOCATION) */
+.active-stop {
+    background: linear-gradient(90deg, #ffe082, #facc15) !important;
+    color: black !important;
+    box-shadow: 0 0 18px rgba(255,215,0,0.8);
+    transform: scale(1.05);
+}
+
+/* POPUP */
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px black;
+    text-align: center;
+    z-index: 100;
+}
+
+.close-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* DASHBOARD BUTTON */
+.dashboard-btn {
+    display: block;
+    margin: 30px auto;
+    width: 240px;
+    padding: 14px;
+    text-align: center;
+    background: linear-gradient(90deg, #ffe082, #facc15);
+    color: black;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">🚌 Bus Timing</div>
+
+<div class="container">
+
+<div class="custom-dropdown">
+    <div class="selected" onclick="toggleDropdown()">
+        🚌 Bus 1 <span class="arrow">▼</span>
+    </div>
+
+    <div class="options" id="dropdownOptions">
+        <div onclick="selectBus(1)">🚌 Bus 1</div>
+        <div onclick="selectBus(2)">🚌 Bus 2</div>
+        <div onclick="selectBus(3)">🚌 Bus 3</div>
+    </div>
+</div>
+
+<div id="busDetails"></div>
+
+</div>
+
+<a href="/login" class="dashboard-btn">⬅ Back to Dashboard</a>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+    <h3 id="stopName">🚌 Stop</h3>
+    <p>🌅 Morning Pickup: 8:30 AM</p>
+    <p>🌆 Evening Drop: 4:30 PM</p>
+    <button class="close-btn" onclick="closePopup()">Close</button>
+</div>
+
+<script>
+
+/* DATA */
+let buses = {
+    1: {
+        name: "🚌 Bus 1 - Main Route",
+        dep: "8:30 AM",
+        arr: "9:15 AM",
+        stops: ["Main Gate","Kuvempunagar","Saraswathipuram","Vani Vilas","Lakshmipuram","Market","KR Circle","Temple Road","Library","College"]
+    },
+    2: {
+        name: "🚌 Bus 2 - Ring Route",
+        dep: "8:00 AM",
+        arr: "9:00 AM",
+        stops: ["Bogadi","Vijayanagar","Ring Road","KRS Road","Hebbal","Infosys","Metagalli","Industrial Area","Signal Point","College"]
+    },
+    3: {
+        name: "🚌 Bus 3 - City Route",
+        dep: "8:15 AM",
+        arr: "9:10 AM",
+        stops: ["Nazarbad","Ashoka Road","Double Road","JLB Road","D Devaraj Urs","Ramaswamy","Mandi Mohalla","Circle","Park","College"]
+    }
+};
+
+/* LOAD BUS */
+function loadBus(id){
+    let b = buses[id];
+
+    let html = `
+    <div class="info">
+    <h3>${b.name}</h3>
+    ⏱ Departure: ${b.dep}<br>
+    ⏱ Arrival: ${b.arr}
+    <h4>📍 Stops:</h4>
+    `;
+
+    b.stops.forEach(s=>{
+        html += `<div class="stop" onclick="showPopup('${s}')">📍 ${s} 🚌</div>`;
+    });
+
+    html += "</div>";
+
+    document.getElementById("busDetails").innerHTML = html;
+
+    startTracking(); // 🔥 important
+}
+
+/* DROPDOWN */
+function toggleDropdown(){
+    let d = document.getElementById("dropdownOptions");
+    d.style.display = d.style.display=="block"?"none":"block";
+}
+
+function selectBus(id){
+    document.querySelector(".selected").innerHTML = "🚌 Bus "+id+" <span class='arrow'>▼</span>";
+    document.getElementById("dropdownOptions").style.display="none";
+    loadBus(id);
+}
+
+/* POPUP */
+function showPopup(stop){
+    document.getElementById("stopName").innerText = "🚌 "+stop;
+    document.getElementById("popup").style.display="block";
+}
+
+function closePopup(){
+    document.getElementById("popup").style.display="none";
+}
+
+/* 🔥 LIVE TRACKING */
+let currentIndex = 0;
+let interval;
+
+function startTracking(){
+
+    clearInterval(interval);
+    currentIndex = 0;
+
+    interval = setInterval(() => {
+
+        let stops = document.querySelectorAll(".stop");
+
+        stops.forEach(s => s.classList.remove("active-stop"));
+
+        if (stops[currentIndex]) {
+            stops[currentIndex].classList.add("active-stop");
+        }
+
+        currentIndex++;
+
+        if (currentIndex >= stops.length) {
+            currentIndex = 0;
+        }
+
+    }, 3000); // smooth slow movement
+}
+
+/* CLICK BUS EFFECT */
+document.addEventListener("click", function(e){
+
+    let bus = document.createElement("div");
+    bus.innerHTML="🚌";
+
+    bus.style.position="fixed";
+    bus.style.left=e.clientX+"px";
+    bus.style.top=e.clientY+"px";
+    bus.style.fontSize="26px";
+    bus.style.pointerEvents="none";
+    bus.style.transition="all 0.6s ease";
+
+    document.body.appendChild(bus);
+
+    setTimeout(()=>{
+        bus.style.transform="translateY(-30px)";
+        bus.style.opacity="0";
+    },50);
+
+    setTimeout(()=>{bus.remove();},600);
+});
+
+/* MOVING BUS */
+function movingBus(){
+    let bus=document.createElement("div");
+    bus.innerHTML="🚌";
+    bus.style.position="fixed";
+    bus.style.left="-50px";
+    bus.style.bottom="20px";
+    bus.style.fontSize="30px";
+    bus.style.transition="all 10s linear";
+
+    document.body.appendChild(bus);
+
+    setTimeout(()=>{bus.style.left="110%";},100);
+    setTimeout(()=>{bus.remove();},10000);
+}
+
+setInterval(movingBus,15000);
+
+/* INIT */
+loadBus(1);
+
+</script>
+
+</body>
+</html>

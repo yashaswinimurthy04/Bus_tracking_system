@@ -311,68 +311,37 @@
 
     <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
     <script>
-      const buses = {
-        1: {
-          dep: "8:30 AM",
-          arr: "9:15 AM",
-          stops: [
-            "Main Gate",
-            "Kuvempunagar",
-            "Saraswathipuram",
-            "Vani Vilas",
-            "Lakshmipuram",
-            "Market",
-            "KR Circle",
-            "Temple Road",
-            "Library",
-            "College",
-          ],
-        },
-        2: {
-          dep: "8:00 AM",
-          arr: "9:00 AM",
-          stops: [
-            "Bogadi",
-            "Vijayanagar",
-            "Ring Road",
-            "KRS Road",
-            "Hebbal",
-            "Infosys",
-            "Metagalli",
-            "Industrial Area",
-            "Signal Point",
-            "College",
-          ],
-        },
-        3: {
-          dep: "8:15 AM",
-          arr: "9:10 AM",
-          stops: [
-            "Nazarbad",
-            "Ashoka Road",
-            "Double Road",
-            "JLB Road",
-            "D Devaraj Urs",
-            "Ramaswamy",
-            "Mandi Mohalla",
-            "Circle",
-            "Park",
-            "College",
-          ],
-        },
-      };
+      const rawBuses = {{ buses|tojson }};
+      const buses = {};
+      
+      // Transform raw backend data to the format the script expects
+      rawBuses.forEach(b => {
+          buses[b.id] = {
+              dep: b.stops.length > 0 ? "Scheduled" : "N/A", // We can enhance this later
+              arr: "TBD",
+              stops: b.stops || [],
+              route: b.route_name
+          };
+      });
+
       let interval,
-        currentBus = 1,
+        currentBus = Object.keys(buses)[0] || 1,
         currentIdx = 0;
+
       function selectBus(id) {
+        if (!buses[id]) return;
         currentBus = id;
         document
           .querySelectorAll(".bus-tab")
           .forEach((t) => t.classList.remove("active"));
-        document.getElementById("tab-" + id).classList.add("active");
+        
+        const tabEl = document.getElementById("tab-" + id);
+        if (tabEl) tabEl.classList.add("active");
+
         const b = buses[id];
         document.getElementById("dep").textContent = b.dep;
         document.getElementById("arr").textContent = b.arr;
+        
         const list = document.getElementById("stopList");
         list.innerHTML = b.stops
           .map(
@@ -384,17 +353,21 @@
     </div>`,
           )
           .join("");
+          
         clearInterval(interval);
         currentIdx = 0;
-        interval = setInterval(() => {
-          document
-            .querySelectorAll(".stop-item")
-            .forEach((s) => s.classList.remove("active-stop"));
-          const el = document.getElementById("stop-" + currentIdx);
-          if (el) el.classList.add("active-stop");
-          currentIdx = (currentIdx + 1) % b.stops.length;
-        }, 2800);
+        if (b.stops.length > 0) {
+            interval = setInterval(() => {
+              document
+                .querySelectorAll(".stop-item")
+                .forEach((s) => s.classList.remove("active-stop"));
+              const el = document.getElementById("stop-" + currentIdx);
+              if (el) el.classList.add("active-stop");
+              currentIdx = (currentIdx + 1) % b.stops.length;
+            }, 2800);
+        }
       }
+
       function showPopup(name) {
         document.getElementById("popupStop").textContent = name;
         document.getElementById("overlay").classList.add("show");
@@ -402,7 +375,11 @@
       function closePopup() {
         document.getElementById("overlay").classList.remove("show");
       }
-      selectBus(1);
+
+      // Initial Load
+      if (Object.keys(buses).length > 0) {
+          selectBus(Object.keys(buses)[0]);
+      }
     </script>
   </body>
 </html>

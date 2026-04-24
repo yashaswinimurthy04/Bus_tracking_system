@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Select Bus</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+.wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.title {
+    position: absolute;
+    top: 40px;
+    font-size: 40px;
+    color: #ffe082;
+}
+
+.card {
+    width: 340px;
+    padding: 30px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.helper-text {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.85;
+    text-align: center;
+}
+
+.bus-btn {
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.25);
+    text-decoration: none;
+    color: white;
+    font-size: 18px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.bus-btn:hover {
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.4);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<div class="title">
+Select Your Bus
+</div>
+
+<div class="card">
+
+<p class="helper-text">
+Choose a bus to open the live tracking demo page.
+</p>
+
+<a href="/tracking?bus=1" class="bus-btn" onclick="saveBus('Bus 1')">&#128652; Bus 1</a>
+
+<a href="/tracking?bus=2" class="bus-btn" onclick="saveBus('Bus 2')">&#128652; Bus 2</a>
+
+<a href="/tracking?bus=3" class="bus-btn" onclick="saveBus('Bus 3')">&#128652; Bus 3</a>
+
+</div>
+
+</div>
+
+<script>
+
+function saveBus(busName) {
+    localStorage.setItem("selectedBus", busName);
+}
+
+document.addEventListener("click", function(e) {
+
+    const bus = document.createElement("div");
+
+    bus.innerHTML = "&#128652;";
+
+    bus.style.position = "fixed";
+    bus.style.left = e.clientX + "px";
+    bus.style.top = e.clientY + "px";
+    bus.style.fontSize = "26px";
+    bus.style.pointerEvents = "none";
+    bus.style.transition = "all 0.5s ease";
+
+    document.body.appendChild(bus);
+
+    setTimeout(() => {
+        bus.style.transform = "translateY(-25px)";
+        bus.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        bus.remove();
+    }, 600);
+
+});
+
+</script>
+
+</body>
+</html>
