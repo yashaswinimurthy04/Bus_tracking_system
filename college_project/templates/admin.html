@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Admin Dashboard</title>
+    <title>RouteX — Command Center</title>
     <!-- Leaflet CSS -->
     <link
       rel="stylesheet"
@@ -274,7 +274,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Username</th>
                   <th>Role</th>
                   <th>Action</th>
                 </tr>
@@ -282,7 +282,7 @@
               <tbody>
                 {% for u in pending_users %}
                 <tr>
-                  <td>{{ u.full_name }}</td>
+                  <td>{{ u.username }}</td>
                   <td>
                     <span class="role-badge {{ u.role }}">{{ u.role }}</span>
                   </td>
@@ -400,7 +400,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Username</th>
                   <th>Role</th>
                   <th>Details</th>
                   <th>Action</th>
@@ -410,7 +410,7 @@
                 {% for u in all_users %}
                 <tr>
                   <td>
-                    {{ u.full_name }} {% if u.role == 'parent' and
+                    {{ u.username }} {% if u.role == 'parent' and
                     u.student_name %}
                     <br /><small style="opacity: 0.7"
                       >(Student: {{ u.student_name }})</small

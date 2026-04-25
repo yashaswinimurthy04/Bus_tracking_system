@@ -53,19 +53,15 @@
       <div class="card dash-wrap">
         <div class="dash-head">
           <div class="avatar">
-            {{ (user.full_name or user.username)[0]|upper }}
+            {{ user.username[0]|upper }}
           </div>
           <div class="dash-head-info">
-            <h2>{{ user.full_name or user.username }}</h2>
+            <h2>{{ user.username }}</h2>
             <p>Student Account</p>
           </div>
         </div>
 
         <div class="info-grid">
-          <div class="info-chip">
-            <div class="info-chip-label">Bus ID</div>
-            <div class="info-chip-value">{{ user.assigned_bus or "Not Assigned" }}</div>
-          </div>
           <div class="info-chip">
             <div class="info-chip-label">Required Stop</div>
             <div class="info-chip-value">{{ user.assigned_stop or "N/A" }}</div>

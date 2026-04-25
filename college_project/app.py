@@ -174,7 +174,8 @@ def login():
             session["user"] = user_data
             return redirect(f"/{role}_dashboard")
         elif response.status_code == 403: # Pending Approval
-            # Admin Bypass: Admins do not need approval
+            # Note: Backend already allows admins to bypass approval, 
+            # but we keep this check for redundancy and clear role handling.
             user_data = response.json().get("user")
             if role == "admin" and user_data:
                 session["user"] = user_data
@@ -184,7 +185,8 @@ def login():
             message = response.json().get("message", "Invalid Login")
             return f"<h2>❌ {message}</h2><a href='/{role}'>Go Back</a>"
     except Exception as e:
-        return render_template("pending.html", error=str(e), role=role) # Fallback
+        # Use a dedicated error page for system/connectivity issues
+        return render_template("error.html", error=str(e), role=role)
 
 
 @app.route("/update_bus", methods=["POST"])
@@ -226,7 +228,7 @@ def driver_dashboard():
         students = []
         if bus_id:
             try:
-                resp = requests.get(f"{BACKEND_URL}/api/bus/{bus_id}/students")
+                resp = requests.get(f"{BACKEND_URL}/bus/{bus_id}/students")
                 if resp.status_code == 200:
                     students = resp.json()
             except:
@@ -338,4 +340,4 @@ def logout():
 
 # ---------- RUN ----------
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=True)
