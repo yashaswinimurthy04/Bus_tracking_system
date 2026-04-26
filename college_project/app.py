@@ -4,7 +4,8 @@ from flask import Flask, render_template, request, redirect, session, jsonify
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-BACKEND_URL = "http://localhost:5001/api"
+import os
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5001/api")
 
 # ---------- HOME ----------
 @app.route("/")
