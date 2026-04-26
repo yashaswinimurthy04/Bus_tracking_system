@@ -237,15 +237,32 @@ def login():
 @app.route("/update_bus", methods=["POST"])
 def update_bus():
     if "user" in session and session["user"]["role"] == "driver":
+        bus_id = session["user"]["assigned_bus"]
+        status = request.form.get("status")
+        current_stop = request.form.get("current_stop")
+        occupancy = request.form.get("occupancy")
+        
         data = {
-            "bus_id": session["user"]["assigned_bus"],
-            "status": request.form.get("status"),
-            "current_stop": request.form.get("current_stop"),
-            "occupancy": request.form.get("occupancy")
+            "bus_id": bus_id,
+            "status": status,
+            "current_stop": current_stop,
+            "occupancy": occupancy
         }
         try:
+            # Update Bus Status
             requests.post(f"{BACKEND_URL}/bus/update_status", json=data)
-            return redirect("/driver_dashboard?msg=Status updated")
+            
+            # Send Notification
+            note_msg = f"Bus {bus_id} is now {status} at {current_stop}."
+            if occupancy:
+                note_msg += f" Occupancy: {occupancy}"
+            
+            requests.post(f"{BACKEND_URL}/notifications", json={
+                "message": note_msg,
+                "sender": f"Driver (Bus {bus_id})"
+            })
+            
+            return redirect("/driver_dashboard?msg=Broadcast successful!")
         except:
             return redirect("/driver_dashboard?error=Update failed")
     return redirect("/driver")

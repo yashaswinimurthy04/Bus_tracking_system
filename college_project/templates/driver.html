@@ -116,8 +116,13 @@
           <div class="student-list-scroll">
             {% if students %}
               {% for s in students %}
-              <div class="student-card">
-                <div class="student-name">{{ s.username }}</div>
+              <div class="student-card" style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="student-name">{{ s.username }}</div>
+                    <span class="badge" style="font-size:10px; padding:2px 8px; border-color:{{ '#f87171' if s.is_absent else '#10b981' }}; color:{{ '#f87171' if s.is_absent else '#10b981' }};">
+                        {{ 'Absent' if s.is_absent else 'Present' }}
+                    </span>
+                </div>
                 <div class="student-stop">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   Stop: {{ s.required_stop or 'Not Set' }}
@@ -147,7 +152,7 @@
                 </div>
                 <div class="input-group">
                     <label class="input-label">Current Stop</label>
-                    <input type="text" name="current_stop" class="input-box" placeholder="e.g. Main Gate">
+                    <input type="text" name="current_stop" id="currentStopInput" class="input-box" placeholder="e.g. Main Gate">
                 </div>
                 <div class="input-group">
                     <label class="input-label">Occupancy (approx)</label>
@@ -171,21 +176,137 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-      // Initialize Map to Mysore
-      var map = L.map('map').setView([12.3382, 76.6261], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-      }).addTo(map);
+      const busId = "{{ user.assigned_bus or '1' }}";
+      const BACKEND_URL = "http://localhost:5001/api";
+      
+      let stops = [];
+      let rawPath = [];
+      let stopIdx = [];
+      let pathIdx = 0;
+      let busHalted = false;
+      let lastSIdx = -1;
+      
+      let map = null;
+      let busMk = null;
+      let stopMarkers = [];
+      let routeLine = null;
+      let passedLine = null;
 
-      // Simulation of current bus location in Mysore
-      var busMarker = L.marker([12.3382, 76.6261], {
-          icon: L.divIcon({
-              className: 'custom-div-icon',
-              html: "<div style='background-color:#fbbf24; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #fbbf24;'></div>",
-              iconSize: [15, 15],
-              iconAnchor: [7, 7]
+      async function initLiveTracking() {
+        try {
+          const res = await fetch(`${BACKEND_URL}/buses/${busId}`);
+          const data = await res.json();
+          
+          if (data && data.stops && data.stops.length > 0) {
+            stops = data.stops;
+
+            rawPath = [];
+            stopIdx = [];
+            for (let i = 0; i < stops.length - 1; i++) {
+              const start = stops[i];
+              const end = stops[i+1];
+              stopIdx.push(rawPath.length);
+              for (let j = 0; j <= 40; j++) {
+                rawPath.push([
+                  start.lat + (end.lat - start.lat) * (j / 40),
+                  start.lng + (end.lng - start.lng) * (j / 40)
+                ]);
+              }
+            }
+            stopIdx.push(rawPath.length - 1);
+            
+            initMap();
+            setTimeout(animate, 1000);
+          }
+        } catch (err) {
+          console.error("Driver Tracking Error:", err);
+        }
+      }
+
+      function initMap() {
+        if (!stops.length) return;
+        if (map) map.remove();
+        
+        map = L.map("map", {
+          zoomControl: true,
+          attributionControl: false,
+        }).setView([stops[0].lat, stops[0].lng], 15);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+        }).addTo(map);
+
+        routeLine = L.polyline(rawPath, {
+          color: "#fbbf24",
+          weight: 4,
+          opacity: 0.3,
+          dashArray: "8 8",
+        }).addTo(map);
+
+        passedLine = L.polyline([], {
+          color: "#34d399",
+          weight: 4,
+          opacity: 0.9,
+        }).addTo(map);
+
+        stopMarkers = stops.map((s, i) => {
+          return L.marker([s.lat, s.lng], {
+            icon: L.divIcon({
+                className: "",
+                html: `<div style="width:10px;height:10px;background:#1e293b;border:2px solid #fff;border-radius:50%;"></div>`,
+                iconSize: [10, 10],
+                iconAnchor: [5, 5],
+            }),
           })
-      }).addTo(map).bindPopup("Current Position - Bus {{ user.assigned_bus }}");
+            .addTo(map)
+            .bindTooltip(s.name, {
+              permanent: true,
+              direction: i % 2 === 0 ? "left" : "right",
+              className: "stt",
+            });
+        });
+
+        const busIcon = L.divIcon({
+          className: "bus-wrap",
+          html: `<div style="background:#fbbf24;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 0 15px rgba(251,191,36,0.6);">🚌</div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        });
+        busMk = L.marker([rawPath[0][0], rawPath[0][1]], {
+          icon: busIcon,
+          zIndexOffset: 1000,
+        }).addTo(map);
+
+        map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+      }
+
+      function animate() {
+        if (busHalted || !map) return;
+        if (pathIdx >= rawPath.length) {
+          busHalted = true;
+          return;
+        }
+
+        const pt = rawPath[pathIdx];
+        busMk.setLatLng(pt);
+        if (pathIdx % 10 === 0) map.panTo(pt, { animate: true });
+        if (pathIdx % 2 === 0) passedLine.setLatLngs(rawPath.slice(0, pathIdx + 1));
+
+        const sIdx = stopIdx.findIndex((val, i) => pathIdx >= val && (i === stopIdx.length - 1 || pathIdx < stopIdx[i+1]));
+        if (sIdx !== lastSIdx && sIdx !== -1) {
+          lastSIdx = sIdx;
+          // Auto-update the current stop input field!
+          document.getElementById("currentStopInput").value = stops[sIdx].name;
+        }
+        pathIdx++;
+        setTimeout(animate, 200);
+      }
+
+      const stel = document.createElement("style");
+      stel.textContent = `.stt{background:rgba(15,23,42,0.85)!important;border:1px solid rgba(255,255,255,0.1)!important;color:#fff!important;font-family:sans-serif;font-size:10px!important;padding:2px 6px!important;border-radius:4px!important;}.leaflet-tooltip-pane{z-index:400!important;}`;
+      document.head.appendChild(stel);
+
+      initLiveTracking();
     </script>
     <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
   </body>

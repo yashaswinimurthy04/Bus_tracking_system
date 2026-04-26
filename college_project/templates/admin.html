@@ -133,12 +133,57 @@
       }
 
       /* --- Box Content Specifics --- */
-      #map {
-        width: 100%;
-        height: 250px;
+      .tracking-layout {
+        display: flex;
+        gap: 20px;
+        height: 100%;
+        min-height: 300px;
+      }
+      .bus-selector {
+        width: 250px;
+        flex-shrink: 0;
+        background: rgba(0, 0, 0, 0.2);
         border-radius: 15px;
-        background: #242424;
-        transition: height 0.4s;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow-y: auto;
+      }
+      .bus-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .bus-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+      }
+      .bus-item.active {
+        background: rgba(6, 182, 212, 0.15);
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+      }
+      .bus-item-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+        color: var(--primary);
+      }
+      .bus-item-route {
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+      
+      #map {
+        flex-grow: 1;
+        height: 300px;
+        border-radius: 15px;
+        background: #1e293b;
+        transition: all 0.4s;
       }
       .box.expanded #map {
         height: 100%;
@@ -310,7 +355,20 @@
         <div class="box" id="mapBox" onclick="expandBox(this)">
           <button class="close-btn" onclick="closeBox(event, this)">×</button>
           <h2>📍 Bus Tracking</h2>
-          <div id="map"></div>
+          <div class="tracking-layout">
+            <div class="bus-selector" onclick="event.stopPropagation()">
+              {% for bus in buses %}
+              <div class="bus-item" id="bus-item-{{ bus.id }}" onclick="selectBus('{{ bus.id }}')">
+                <div class="bus-item-title">Bus {{ bus.id }}</div>
+                <div class="bus-item-route">{{ bus.route_from }} → {{ bus.route_to }}</div>
+              </div>
+              {% endfor %}
+              {% if not buses %}
+              <p style="opacity:0.5; font-size: 0.8rem; text-align: center;">No buses added.</p>
+              {% endif %}
+            </div>
+            <div id="map"></div>
+          </div>
         </div>
 
         <!-- Box 3: Data Entry -->
@@ -485,25 +543,106 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+      const BACKEND_URL = "http://localhost:5001/api";
       var map = L.map('map').setView([12.3382, 76.6261], 14);
-
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-      var buses = {{ buses|tojson }};
-      buses.forEach(function(bus) {
-          if(bus.lat && bus.lng) {
-              L.marker([bus.lat, bus.lng]).addTo(map)
-               .bindPopup("<b>" + bus.name + "</b><br>" + bus.route_name);
+      // Global Tracking State
+      let currentBusId = null;
+      let stops = [];
+      let rawPath = [];
+      let pathIdx = 0;
+      let busHalted = false;
+      let busMk = null;
+      let routeLine = null;
+      let passedLine = null;
+      let stopMarkers = [];
+      let animTimer = null;
+
+      async function selectBus(id) {
+        if (currentBusId === id) return;
+        currentBusId = id;
+
+        // UI update
+        document.querySelectorAll('.bus-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`bus-item-${id}`).classList.add('active');
+
+        // Reset previous tracking
+        if (animTimer) clearTimeout(animTimer);
+        if (busMk) map.removeLayer(busMk);
+        if (routeLine) map.removeLayer(routeLine);
+        if (passedLine) map.removeLayer(passedLine);
+        stopMarkers.forEach(m => map.removeLayer(m));
+        stopMarkers = [];
+        pathIdx = 0;
+        busHalted = false;
+
+        try {
+          const res = await fetch(`${BACKEND_URL}/buses/${id}`);
+          const data = await res.json();
+          
+          if (data && data.stops && data.stops.length > 0) {
+            stops = data.stops;
+
+            // Generate Path
+            rawPath = [];
+            for (let i = 0; i < stops.length - 1; i++) {
+              const start = stops[i];
+              const end = stops[i+1];
+              for (let j = 0; j <= 40; j++) {
+                rawPath.push([
+                  start.lat + (end.lat - start.lat) * (j / 40),
+                  start.lng + (end.lng - start.lng) * (j / 40)
+                ]);
+              }
+            }
+
+            // Render on Map
+            routeLine = L.polyline(rawPath, { color: "#06b6d4", weight: 3, opacity: 0.3, dashArray: "8 8" }).addTo(map);
+            passedLine = L.polyline([], { color: "#06b6d4", weight: 4, opacity: 0.8 }).addTo(map);
+
+            stopMarkers = stops.map((s, i) => {
+              return L.marker([s.lat, s.lng], {
+                icon: L.divIcon({
+                  className: "",
+                  html: `<div style="width:10px;height:10px;background:#1e293b;border:2px solid #fff;border-radius:50%;"></div>`,
+                  iconSize: [10, 10], iconAnchor: [5, 5]
+                })
+              }).addTo(map).bindTooltip(s.name, { permanent: false, direction: "top" });
+            });
+
+            busMk = L.marker(rawPath[0], {
+              icon: L.divIcon({
+                className: "bus-wrap",
+                html: `<div style="background:#06b6d4;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;border:2.5px solid #fff;box-shadow:0 0 15px rgba(6,182,212,0.5);">🚌</div>`,
+                iconSize: [32, 32], iconAnchor: [16, 16]
+              })
+            }).addTo(map);
+
+            map.fitBounds(routeLine.getBounds(), { padding: [40, 40] });
+            animate();
           }
-      });
+        } catch (err) { console.error("Admin Tracking Error:", err); }
+      }
+
+      function animate() {
+        if (busHalted || !map || !busMk) return;
+        if (pathIdx >= rawPath.length) { busHalted = true; return; }
+
+        const pt = rawPath[pathIdx];
+        busMk.setLatLng(pt);
+        if (pathIdx % 2 === 0) passedLine.setLatLngs(rawPath.slice(0, pathIdx + 1));
+        
+        pathIdx++;
+        animTimer = setTimeout(animate, 150);
+      }
 
       function addStopField() {
           const container = document.getElementById('stopsContainer');
           const div = document.createElement('div');
-          div.style.display = 'flex';
-          div.style.gap = '10px';
-          div.style.marginBottom = '10px';
+          div.style.display = 'flex'; div.style.gap = '10px'; div.style.marginBottom = '10px';
           div.innerHTML = `
               <input type="text" name="stops_names[]" placeholder="Stop Name" style="flex-grow:2;" required>
               <input type="text" name="stops_lats[]" placeholder="Lat" style="width:80px;" required>
@@ -525,6 +664,13 @@
           const box = btn.closest('.box');
           box.classList.remove('expanded');
           if (box.id === 'mapBox') setTimeout(() => map.invalidateSize(), 400);
+      }
+
+      // Initial selection
+      const firstBus = document.querySelector('.bus-item');
+      if(firstBus) {
+        const id = firstBus.id.replace('bus-item-', '');
+        selectBus(id);
       }
     </script>
     <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
