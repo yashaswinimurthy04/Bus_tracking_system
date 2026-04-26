@@ -167,7 +167,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
       const busId = "{{ user.assigned_bus or '1' }}";
-      const BACKEND_URL = "http://localhost:5001/api";
+      const BACKEND_URL = "{{ backend_url }}";
       
       let stops = [];
       let rawPath = [];

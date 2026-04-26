@@ -5,7 +5,11 @@ app = Flask(__name__)
 app.secret_key = "secret123"
 
 import os
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5001/api")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://bus-backend-2-cpy7.onrender.com/api")
+
+@app.context_processor
+def inject_backend_url():
+    return dict(backend_url=BACKEND_URL)
 
 # ---------- HOME ----------
 @app.route("/")

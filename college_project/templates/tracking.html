@@ -535,7 +535,7 @@
     <script>
       const urlParams = new URLSearchParams(window.location.search);
       const busId = urlParams.get('bus') || '1';
-      const BACKEND_URL = "http://localhost:5001/api";
+      const BACKEND_URL = "{{ backend_url }}";
       
       // Global State
       let stops = [];
