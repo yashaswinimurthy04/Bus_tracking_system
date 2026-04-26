@@ -117,10 +117,10 @@
             {% if students %}
               {% for s in students %}
               <div class="student-card">
-                <div class="student-name">{{ s.full_name }}</div>
+                <div class="student-name">{{ s.username }}</div>
                 <div class="student-stop">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  Stop: {{ s.assigned_stop or 'Not Set' }}
+                  Stop: {{ s.required_stop or 'Not Set' }}
                 </div>
               </div>
               {% endfor %}
@@ -171,14 +171,14 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-      // Initialize Map
-      var map = L.map('map').setView([12.9716, 77.5946], 13);
+      // Initialize Map to Mysore
+      var map = L.map('map').setView([12.3382, 76.6261], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
       }).addTo(map);
 
-      // Simulation of current bus location
-      var busMarker = L.marker([12.9716, 77.5946], {
+      // Simulation of current bus location in Mysore
+      var busMarker = L.marker([12.3382, 76.6261], {
           icon: L.divIcon({
               className: 'custom-div-icon',
               html: "<div style='background-color:#fbbf24; width:15px; height:15px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #fbbf24;'></div>",

@@ -1,5 +1,5 @@
 import requests
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -51,7 +51,10 @@ def signup(role):
             "role": role,
             "student_name": request.form.get("student_name"),
             "assigned_bus": request.form.get("assigned_bus"),
-            "assigned_stop": request.form.get("assigned_stop")
+            "assigned_stop": request.form.get("assigned_stop"),
+            "parent_name": request.form.get("parent_name"),
+            "full_name": request.form.get("full_name"),
+            "student_name": request.form.get("student_name")
         }
         
         try:
@@ -152,6 +155,27 @@ def parent_notifications():
         return render_template("parent_notifications.html", notifications=notifications)
     except:
         return render_template("parent_notifications.html", notifications=[])
+
+
+@app.route('/toggle_attendance', methods=['POST'])
+def toggle_attendance():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Not logged in"}), 401
+    
+    is_absent = request.json.get('is_absent')
+    try:
+        response = requests.post(f"{BACKEND_URL}/student/attendance", json={
+            "username": session['user']['username'],
+            "is_absent": is_absent
+        })
+        if response.status_code == 200:
+            session['user']['is_absent'] = is_absent
+            session.modified = True
+            return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error toggling attendance: {e}")
+    
+    return jsonify({"success": False}), 500
 
 
 # ---------- API AUTH LOGIN ----------

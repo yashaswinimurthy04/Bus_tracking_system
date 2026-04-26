@@ -539,11 +539,11 @@
       const MY_STOP_IDX = 3; // bus halts here
 
       const stops = [
-        { name: "Main Gate", lat: 12.2958, lng: 76.6394 },
-        { name: "Stop 2", lat: 12.2992, lng: 76.6455 },
-        { name: "Stop 3", lat: 12.3028, lng: 76.6492 },
-        { name: "Your Stop ★", lat: 12.3065, lng: 76.6538 }, // ← student gets on here
-        { name: "College", lat: 12.3138, lng: 76.6601 }, // shown on map but bus won't go there
+        { name: "GSSS SSFGC Mysuru", lat: 12.3382, lng: 76.6261 },
+        { name: "Metagalli", lat: 12.3350, lng: 76.6300 },
+        { name: "KRS Road", lat: 12.3300, lng: 76.6350 },
+        { name: "Your Stop ★", lat: 12.3250, lng: 76.6400 }, 
+        { name: "Main Gate", lat: 12.3200, lng: 76.6450 },
       ];
 
       // ─────────────────────────────────────────────
@@ -552,8 +552,8 @@
       // Each segment turns, corners, curves — no straight diagonals.
       // ─────────────────────────────────────────────
       const rawPath = [
-        // ══ DEPART Main Gate — head EAST along bottom road ══
-        [12.2958, 76.6394],
+        // ══ DEPART GSSS SSFGC — head EAST along bottom road ══
+        [12.3382, 76.6261],
         [12.29582, 76.63985],
         [12.29584, 76.6403],
         [12.29586, 76.64075],
@@ -662,7 +662,7 @@
       const map = L.map("map", {
         zoomControl: true,
         attributionControl: false,
-      }).setView([12.3012, 76.6465], 15);
+      }).setView([12.3382, 76.6261], 15);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,

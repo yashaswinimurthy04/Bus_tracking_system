@@ -69,6 +69,14 @@
         </div>
 
         <div class="divider"></div>
+        <div class="attendance-section" style="padding: 20px;">
+          <h3 style="margin-bottom:12px; font-size:16px;">Daily Attendance</h3>
+          <button id="attendance-btn" class="menu-btn" style="width:100%; justify-content:center; background: {{ 'rgba(248, 113, 113, 0.1)' if user.is_absent else 'rgba(6, 182, 212, 0.1)' }}; border-color: {{ '#f87171' if user.is_absent else '#06b6d4' }}; color: {{ '#f87171' if user.is_absent else '#06b6d4' }};">
+            {{ 'Marked as Absent' if user.is_absent else 'Mark Myself as Absent' }}
+          </button>
+        </div>
+
+        <div class="divider"></div>
         <div class="menu-list">
           <a href="/tracking?bus=1" class="menu-btn" id="btn-track">
             <div class="menu-icon">
@@ -161,6 +169,24 @@
         </div>
       </div>
     </div>
+    <script>
+      document.getElementById('attendance-btn').addEventListener('click', function() {
+        const isAbsent = this.innerText.includes('Mark Myself');
+        fetch('/toggle_attendance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_absent: isAbsent })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Failed to update attendance');
+          }
+        });
+      });
+    </script>
     <script src="{{ url_for('static', filename='css/anim.js') }}"></script>
   </body>
 </html>

@@ -65,10 +65,14 @@
             <label class="input-label">Required Stop</label>
             <input class="input-box" type="text" name="assigned_stop" placeholder="e.g. Main Gate" required />
           </div>
+          <div class="input-group">
+            <label class="input-label">Parent's Name</label>
+            <input class="input-box" type="text" name="parent_name" placeholder="Enter parent's name" required />
+          </div>
           {% elif role == 'parent' %}
           <div class="input-group">
-            <label class="input-label">Student Name</label>
-            <input class="input-box" type="text" name="student_name" placeholder="Enter student name" required />
+            <label class="input-label">Child Name (must match student record)</label>
+            <input class="input-box" type="text" name="student_name" placeholder="Enter student's username" required />
           </div>
           {% elif role == 'driver' %}
           <div class="input-group">
