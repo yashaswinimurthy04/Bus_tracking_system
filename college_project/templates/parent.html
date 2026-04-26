@@ -122,6 +122,11 @@
           </div>
           
           <div class="detail-item">
+            <div class="detail-label">Assigned Bus</div>
+            <div class="detail-value" style="color: var(--cyan);">Bus {{ user.assigned_bus or "N/A" }}</div>
+          </div>
+          
+          <div class="detail-item">
             <div class="detail-label">Attendance Status</div>
             <div class="detail-value" style="color: {{ '#f87171' if user.is_absent else '#10b981' }};">
               {{ 'Marked as Absent' if user.is_absent else 'Present' }}
@@ -135,7 +140,7 @@
         </div>
 
         <div class="menu-grid">
-          <a href="/tracking?bus=1" class="quick-action">
+          <a href="/tracking?bus={{ user.assigned_bus or '1' }}" class="quick-action">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
             <span>Track Bus</span>
           </a>

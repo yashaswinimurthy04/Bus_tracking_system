@@ -63,7 +63,12 @@
           {% if role == 'student' %}
           <div class="input-group">
             <label class="input-label">Required Stop</label>
-            <input class="input-box" type="text" name="assigned_stop" placeholder="e.g. Main Gate" required />
+            <input class="input-box" type="text" name="assigned_stop" list="stopOptions" placeholder="Type or select stop..." required />
+            <datalist id="stopOptions">
+              {% for stop in available_stops %}
+              <option value="{{ stop }}">
+              {% endfor %}
+            </datalist>
           </div>
           <div class="input-group">
             <label class="input-label">Parent's Name</label>

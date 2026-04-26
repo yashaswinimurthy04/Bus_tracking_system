@@ -66,6 +66,10 @@
             <div class="info-chip-label">Required Stop</div>
             <div class="info-chip-value">{{ user.assigned_stop or "N/A" }}</div>
           </div>
+          <div class="info-chip">
+            <div class="info-chip-label">Assigned Bus</div>
+            <div class="info-chip-value" style="color: var(--cyan);">{{ user.assigned_bus or "Searching..." }}</div>
+          </div>
         </div>
 
         <div class="divider"></div>
@@ -78,7 +82,7 @@
 
         <div class="divider"></div>
         <div class="menu-list">
-          <a href="/tracking?bus=1" class="menu-btn" id="btn-track">
+          <a href="/tracking?bus={{ user.assigned_bus or '1' }}" class="menu-btn" id="btn-track">
             <div class="menu-icon">
               <svg
                 viewBox="0 0 24 24"

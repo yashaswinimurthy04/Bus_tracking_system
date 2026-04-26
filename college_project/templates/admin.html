@@ -360,14 +360,28 @@
                   margin-bottom: 5px;
                   display: block;
                 "
-                >Route Stops</label
+                >Route Stops (Name, Latitude, Longitude)</label
               >
               <div style="display: flex; gap: 10px; margin-bottom: 10px">
                 <input
                   type="text"
-                  name="stops[]"
+                  name="stops_names[]"
                   placeholder="Stop Name"
-                  style="flex-grow: 1"
+                  style="flex-grow: 2"
+                  required
+                />
+                <input
+                  type="text"
+                  name="stops_lats[]"
+                  placeholder="Lat"
+                  style="width: 80px"
+                  required
+                />
+                <input
+                  type="text"
+                  name="stops_lngs[]"
+                  placeholder="Lng"
+                  style="width: 80px"
                   required
                 />
                 <button
@@ -491,7 +505,9 @@
           div.style.gap = '10px';
           div.style.marginBottom = '10px';
           div.innerHTML = `
-              <input type="text" name="stops[]" placeholder="Stop Name" style="flex-grow:1;" required>
+              <input type="text" name="stops_names[]" placeholder="Stop Name" style="flex-grow:2;" required>
+              <input type="text" name="stops_lats[]" placeholder="Lat" style="width:80px;" required>
+              <input type="text" name="stops_lngs[]" placeholder="Lng" style="width:80px;" required>
               <button type="button" onclick="this.parentElement.remove()" style="background: #ff4d4d; border:none; border-radius:8px; width:40px; cursor:pointer; color:white; font-weight:bold;">×</button>
           `;
           container.appendChild(div);

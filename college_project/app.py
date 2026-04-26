@@ -45,6 +45,7 @@ def signup(role):
     if role == "driver":
         return redirect("/driver?msg=Driver registration is managed by admin.")
     if request.method == "POST":
+        # ... (POST logic remains same)
         data = {
             "username": request.form.get("username"),
             "password": request.form.get("password"),
@@ -67,7 +68,26 @@ def signup(role):
         except Exception as e:
             return render_template("signup.html", role=role, error=f"Backend Error: {e}")
 
-    return render_template("signup.html", role=role)
+    # Fetch available stops for students
+    available_stops = []
+    if role == "student":
+        try:
+            resp = requests.get(f"{BACKEND_URL}/buses")
+            if resp.status_code == 200:
+                buses = resp.json()
+                stop_set = set()
+                for b in buses:
+                    for s in b.get("stops", []):
+                        # stops are now dicts with 'name'
+                        if isinstance(s, dict):
+                            stop_set.add(s.get("name"))
+                        else:
+                            stop_set.add(s)
+                available_stops = sorted(list(stop_set))
+        except:
+            pass
+
+    return render_template("signup.html", role=role, available_stops=available_stops)
 
 
 # ---------- TRACKING ----------
@@ -91,7 +111,8 @@ def tracking():
     return render_template(
         "tracking.html",
         bus=selected_bus,
-        bus_options=bus_options
+        bus_options=bus_options,
+        user=session.get("user", {})
     )
 
 
@@ -321,18 +342,30 @@ def delete_user(user_id):
 @app.route("/add_bus", methods=["POST"])
 def add_bus():
     if "user" in session and session["user"]["role"] == "admin":
-        # Collect dynamically added stops from the form
-        stops = request.form.getlist("stops[]")
+        # Collect dynamically added stops with coordinates from the form
+        stop_names = request.form.getlist("stops_names[]")
+        stop_lats = request.form.getlist("stops_lats[]")
+        stop_lngs = request.form.getlist("stops_lngs[]")
+        
+        stops_data = []
+        for i in range(len(stop_names)):
+            if stop_names[i].strip():
+                stops_data.append({
+                    "name": stop_names[i],
+                    "lat": float(stop_lats[i]) if stop_lats[i] else 0,
+                    "lng": float(stop_lngs[i]) if stop_lngs[i] else 0,
+                    "time": "" # Placeholder
+                })
         
         data = {
             "id": request.form.get("id"),
-            "route_name": f"{request.form.get('route_from')} → {request.form.get('route_to')}",
-            "stops": stops,
+            "route_from": request.form.get("route_from"),
+            "route_to": request.form.get("route_to"),
+            "stops": stops_data,
             "driver_name": request.form.get("driver_name"),
-            # Placeholder defaults for removed fields
             "name": f"Bus {request.form.get('id')}",
-            "lat": 12.9716, 
-            "lng": 77.5946
+            "lat": stops_data[0]["lat"] if stops_data else 12.3382, 
+            "lng": stops_data[0]["lng"] if stops_data else 76.6261
         }
         
         try:
