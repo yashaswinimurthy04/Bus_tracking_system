@@ -461,6 +461,17 @@
             </div>
 
             <button type="submit" class="submit-btn">Save Bus & Route</button>
+
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <select id="editBusSelect" style="flex-grow: 1; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                <option value="" style="background: #1e293b; color: white;">-- Select Bus to Edit --</option>
+                {% for bus in buses %}
+                <option value="{{ bus.id }}" style="background: #1e293b; color: white;">Bus {{ bus.id }} ({{ bus.route_from }} → {{ bus.route_to }})</option>
+                {% endfor %}
+              </select>
+              <button type="button" onclick="loadBusForEdit()" class="submit-btn" style="background: var(--accent);">Load for Edit</button>
+            </div>
           </form>
         </div>
 
@@ -664,6 +675,51 @@
           const box = btn.closest('.box');
           box.classList.remove('expanded');
           if (box.id === 'mapBox') setTimeout(() => map.invalidateSize(), 400);
+      }
+
+      async function loadBusForEdit() {
+        const busId = document.getElementById('editBusSelect').value;
+        if (!busId) return alert('Please select a bus to edit.');
+        try {
+          const res = await fetch(`${BACKEND_URL}/buses/${busId}`);
+          const data = await res.json();
+          if (data && data.id) {
+             const form = document.querySelector('.entry-form');
+             form.querySelector('input[name="id"]').value = data.id;
+             form.querySelector('input[name="route_from"]').value = data.route_from;
+             form.querySelector('input[name="route_to"]').value = data.route_to;
+             form.querySelector('input[name="driver_name"]').value = data.driver_name || "";
+             
+             // Clear existing stops except the label and the add button wrapper
+             const container = document.getElementById('stopsContainer');
+             const children = Array.from(container.children);
+             children.forEach(c => {
+                 if(c.tagName !== 'LABEL') c.remove();
+             });
+             
+             // Populate stops
+             data.stops.forEach((stop, index) => {
+                 const div = document.createElement('div');
+                 div.style.display = 'flex'; div.style.gap = '10px'; div.style.marginBottom = '10px';
+                 div.innerHTML = `
+                     <input type="text" name="stops_names[]" placeholder="Stop Name" style="flex-grow:2;" value="${stop.name}" required>
+                     <input type="text" name="stops_lats[]" placeholder="Lat" style="width:80px;" value="${stop.lat}" required>
+                     <input type="text" name="stops_lngs[]" placeholder="Lng" style="width:80px;" value="${stop.lng}" required>
+                     ${index === 0 ? 
+                     '<button type="button" onclick="addStopField()" style="background: var(--primary); border:none; border-radius:8px; width:40px; cursor:pointer; font-weight:bold; font-size:1.2rem;">+</button>' 
+                     : 
+                     '<button type="button" onclick="this.parentElement.remove()" style="background: #ff4d4d; border:none; border-radius:8px; width:40px; cursor:pointer; color:white; font-weight:bold;">×</button>'
+                     }
+                 `;
+                 container.appendChild(div);
+             });
+             
+             alert(`Loaded Bus ${data.id} for editing.`);
+          }
+        } catch(err) {
+            console.error(err);
+            alert("Failed to load bus details.");
+        }
       }
 
       // Initial selection
