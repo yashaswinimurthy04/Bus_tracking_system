@@ -156,11 +156,16 @@ def bus_timing():
 @app.route("/route_details")
 def route_details():
     try:
-        response = requests.get(f"{BACKEND_URL}/buses")
-        buses = response.json() if response.status_code == 200 else []
-        return render_template("route_details.html", buses=buses)
-    except:
-        return render_template("route_details.html", buses=[])
+        bus_resp = requests.get(f"{BACKEND_URL}/buses")
+        buses = bus_resp.json() if bus_resp.status_code == 200 else []
+        
+        student_resp = requests.get(f"{BACKEND_URL}/students")
+        students = student_resp.json() if student_resp.status_code == 200 else []
+        
+        return render_template("route_details.html", buses=buses, students=students)
+    except Exception as e:
+        print(f"Route Details Error: {e}")
+        return render_template("route_details.html", buses=[], students=[])
 
 
 @app.route("/notifications")

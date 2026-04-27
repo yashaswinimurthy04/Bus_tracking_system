@@ -665,7 +665,6 @@
         if (!c) return;
         c.innerHTML = "";
         stops.forEach((s, i) => {
-          if (i > Math.max(3, MY_STOP_IDX)) return;
           const done = i < curSIdx, here = i === curSIdx, last = i === stops.length - 1;
           const row = document.createElement("div");
           row.className = "rrow";
@@ -685,15 +684,42 @@
         const cur = stops[sIdx];
         const nextIdx = Math.min(sIdx + 1, stops.length - 1);
         const nxt = stops[nextIdx];
-        const ptsLeft = rawPath.length - pathIdx;
-        const eta = Math.max(1, Math.ceil(ptsLeft / 10));
-
-        document.getElementById("curStop").textContent = cur.name;
-        document.getElementById("nxtStop").textContent = nxt.name;
-        document.getElementById("etaNum").textContent = eta;
-        document.getElementById("statusText").textContent = (sIdx >= MY_STOP_IDX) ? "🎉 Arrived at your stop!" : `Moving towards ${nxt.name}`;
         
-        if (sIdx === MY_STOP_IDX - 1) document.getElementById("arrivingBanner").classList.add("show");
+        document.getElementById("curStop").textContent = cur.name;
+        document.getElementById("nxtStop").textContent = sIdx === stops.length - 1 ? "End of Route" : nxt.name;
+
+        const isPast = sIdx > MY_STOP_IDX;
+        const isHere = sIdx === MY_STOP_IDX;
+        const etaNum = document.getElementById("etaNum");
+        const etaUnit = etaNum.nextElementSibling;
+
+        if (isPast) {
+            etaNum.textContent = "-";
+            etaUnit.textContent = "Passed";
+        } else if (isHere) {
+            etaNum.textContent = "0";
+            etaUnit.textContent = "Arrived";
+        }
+
+        let statusTxt = "";
+        if (sIdx === stops.length - 1) {
+            statusTxt = "Route Completed";
+        } else if (isHere) {
+            statusTxt = "🎉 Arrived at your stop!";
+        } else if (isPast) {
+            statusTxt = `Moving towards ${nxt.name} (Passed your stop)`;
+        } else {
+            statusTxt = `Moving towards ${nxt.name}`;
+        }
+        document.getElementById("statusText").textContent = statusTxt;
+        
+        const banner = document.getElementById("arrivingBanner");
+        if (sIdx === MY_STOP_IDX - 1) {
+            banner.classList.add("show");
+        } else {
+            banner.classList.remove("show");
+        }
+        
         renderRouteList(sIdx);
       }
 
@@ -701,8 +727,7 @@
         if (busHalted || !map) return;
         if (pathIdx >= rawPath.length) {
           busHalted = true;
-          updateSidebar(MY_STOP_IDX);
-          showToast("Arrived!", "Bus has reached your stop. 🚌", "Now");
+          updateSidebar(stops.length - 1);
           return;
         }
 
@@ -719,7 +744,20 @@
             const state = i < sIdx ? "done" : i === sIdx ? "here" : "future";
             m.setIcon(makeStopIcon(state, i === MY_STOP_IDX));
           });
+          if (sIdx === MY_STOP_IDX) {
+             showToast("Arrived!", "Bus has reached your stop. 🚌", "Now");
+          }
         }
+        
+        // Continuous ETA Update
+        if (sIdx < MY_STOP_IDX) {
+            const targetPathIdx = stopIdx[MY_STOP_IDX];
+            const ptsLeft = Math.max(0, targetPathIdx - pathIdx);
+            const eta = Math.max(1, Math.ceil(ptsLeft / 10));
+            document.getElementById("etaNum").textContent = eta;
+            document.getElementById("etaNum").nextElementSibling.textContent = "mins away";
+        }
+
         pathIdx++;
         setTimeout(animate, 200);
       }
