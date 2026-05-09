@@ -102,7 +102,12 @@
   </head>
   <body>
     <nav class="topbar">
-      <span class="topbar-brand">RouteX Parent Portal</span>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <a href="javascript:history.back()" style="color:var(--white); text-decoration:none; display:flex; align-items:center; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </a>
+        <span class="topbar-brand">RouteX Parent Portal</span>
+      </div>
       <div class="topbar-right">
         <span class="topbar-badge"><span class="topbar-dot"></span>System Online</span>
         <a href="/logout" class="topbar-logout">Sign Out</a>

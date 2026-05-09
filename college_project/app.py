@@ -26,7 +26,10 @@ def welcome():
             all_stops = set()
             for bus in buses:
                 for stop in bus.get("stops", []):
-                    all_stops.add(stop)
+                    if isinstance(stop, dict):
+                        all_stops.add(stop.get("name"))
+                    else:
+                        all_stops.add(stop)
             stop_count = len(all_stops)
     except Exception as e:
         print(f"Welcome Fetch Error: {e}")
